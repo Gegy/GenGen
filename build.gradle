@@ -34,8 +34,7 @@ repositories {
 }
 
 dependencies {
-  deobfCompile "io.github.opencubicchunks:cubicchunks-api:1.12.2-0.0-SNAPSHOT"
-  deobfCompile "io.github.opencubicchunks:cubicchunks:1.12.2-0.0-SNAPSHOT"
+  compileOnly "io.github.opencubicchunks:cubicchunks-api:1.12.2-0.0-SNAPSHOT"
 }
 
 jar {
@@ -58,7 +57,7 @@ publishing {
   publications {
     mavenJava(MavenPublication) {
       groupId "net.gegy1000"
-      artifactId "cubic-clue"
+      artifactId "cubic-glue"
       version project.version
 
       from components.java

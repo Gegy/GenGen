@@ -26,7 +26,7 @@ public class GluedCubeGenerator implements ICubeGenerator {
     private final World world;
     private final CubicChunkGenerator generator;
 
-    private final Biome[] biomeBuffer = new Biome[256];
+    private Biome[] biomeBuffer = new Biome[256];
 
     public GluedCubeGenerator(World world, CubicChunkGenerator generator) {
         this.world = world;
@@ -45,7 +45,7 @@ public class GluedCubeGenerator implements ICubeGenerator {
 
     @Override
     public void generateColumn(Chunk chunk) {
-        this.generator.populateBiomes(new ChunkPos(chunk.x, chunk.z), this.biomeBuffer);
+        this.biomeBuffer = this.generator.populateBiomes(new ChunkPos(chunk.x, chunk.z), this.biomeBuffer);
         byte[] biomeArray = chunk.getBiomeArray();
         for (int i = 0; i < this.biomeBuffer.length; i++) {
             biomeArray[i] = (byte) Biome.getIdForBiome(this.biomeBuffer[i]);
@@ -83,5 +83,9 @@ public class GluedCubeGenerator implements ICubeGenerator {
     @Override
     public BlockPos getClosestStructure(String name, BlockPos pos, boolean findUnexplored) {
         return null;
+    }
+
+    public CubicChunkGenerator getInner() {
+        return this.generator;
     }
 }

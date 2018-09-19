@@ -24,7 +24,7 @@ public class GluedColumnGenerator implements IChunkGenerator {
     private final World world;
     private final CubicChunkGenerator generator;
 
-    private final Biome[] biomeBuffer = new Biome[256];
+    private Biome[] biomeBuffer = new Biome[256];
 
     public GluedColumnGenerator(World world, CubicChunkGenerator generator) {
         this.world = world;
@@ -49,7 +49,7 @@ public class GluedColumnGenerator implements IChunkGenerator {
     }
 
     private void populateBiomes(Chunk chunk) {
-        this.generator.populateBiomes(new ChunkPos(chunk.x, chunk.z), this.biomeBuffer);
+        this.biomeBuffer = this.generator.populateBiomes(new ChunkPos(chunk.x, chunk.z), this.biomeBuffer);
         byte[] biomeArray = chunk.getBiomeArray();
         for (int i = 0; i < this.biomeBuffer.length; i++) {
             biomeArray[i] = (byte) Biome.getIdForBiome(this.biomeBuffer[i]);
@@ -83,5 +83,9 @@ public class GluedColumnGenerator implements IChunkGenerator {
     @Override
     public boolean isInsideStructure(World world, String structureName, BlockPos pos) {
         return false;
+    }
+
+    public CubicChunkGenerator getInner() {
+        return this.generator;
     }
 }
