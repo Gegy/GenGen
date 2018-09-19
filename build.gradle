@@ -1,0 +1,80 @@
+buildscript {
+  repositories {
+    jcenter()
+    maven {
+      name = "forge"
+      url = "http://files.minecraftforge.net/maven"
+    }
+  }
+  dependencies {
+    classpath "net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT"
+  }
+}
+
+apply plugin: "net.minecraftforge.gradle.forge"
+apply plugin: "maven-publish"
+
+version = "0.1.0-SNAPSHOT"
+group = "net.gegy1000"
+archivesBaseName = "cubic-glue"
+sourceCompatibility = targetCompatibility = "1.8"
+
+minecraft {
+  version = "1.12.2-14.23.4.2729"
+  runDir = "minecraft"
+  mappings = "stable_39"
+}
+
+repositories {
+  mavenCentral()
+  jcenter()
+  maven {
+    url = "https://oss.sonatype.org/content/repositories/public/"
+  }
+}
+
+dependencies {
+  deobfCompile "io.github.opencubicchunks:cubicchunks-api:1.12.2-0.0-SNAPSHOT"
+  deobfCompile "io.github.opencubicchunks:cubicchunks:1.12.2-0.0-SNAPSHOT"
+}
+
+jar {
+  manifest {
+    attributes "Maven-Artifact": "${project.group}:${project.archivesBaseName}:${project.version}"
+    attributes "Timestamp": System.currentTimeMillis()
+  }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+
+artifacts {
+  archives sourcesJar
+}
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      groupId "net.gegy1000"
+      artifactId "cubic-clue"
+      version project.version
+
+      from components.java
+
+      artifact sourcesJar {
+        classifier "sources"
+      }
+    }
+  }
+  repositories {
+    maven {
+      credentials {
+        username project.mavenUsername ?: ""
+        password project.mavenPassword ?: ""
+      }
+      url project.mavenUrl ?: ""
+    }
+  }
+}
