@@ -44,7 +44,7 @@ public class GluedColumnWorldType extends WorldType {
     protected final CubicWorldType worldType;
 
     public GluedColumnWorldType(CubicWorldType worldType) {
-        super(nameField != null ? worldType.getName() : "lbps");
+        super(nameField == null ? worldType.getName() : "lbps");
         this.worldType = worldType;
         setName(this, worldType.getName());
     }
