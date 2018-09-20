@@ -6,6 +6,7 @@ import net.gegy1000.cubicglue.util.CubicPos;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 
 import javax.annotation.Nullable;
@@ -54,6 +55,11 @@ public class GluedColumnPopulationWriter implements ChunkPopulationWriter {
         }
 
         return null;
+    }
+
+    @Override
+    public Biome getCenterBiome() {
+        return this.world.getChunk(this.pos.getX(), this.pos.getZ()).getBiome(POPULATION_CENTER, this.world.getBiomeProvider());
     }
 
     @Override

@@ -7,6 +7,7 @@ import net.gegy1000.cubicglue.util.CubicPos;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -40,6 +41,11 @@ public class GluedCubePopulationWriter implements ChunkPopulationWriter {
 
         BlockPos start = new BlockPos(pos.getX(), this.pos.getMaxY() + 16, pos.getZ());
         return ((ICubicWorld) this.world).findTopBlock(start, minFreeY, maxFreeY, ICubicWorld.SurfaceType.SOLID);
+    }
+
+    @Override
+    public Biome getCenterBiome() {
+        return this.world.getChunk(this.pos.getX(), this.pos.getZ()).getBiome(POPULATION_CENTER, this.world.getBiomeProvider());
     }
 
     @Override
