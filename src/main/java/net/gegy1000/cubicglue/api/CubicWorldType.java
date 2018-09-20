@@ -29,7 +29,7 @@ public interface CubicWorldType {
     }
 
     default WorldType create() {
-        return CubicGlue.get().createWorldType(this);
+        return CubicGlue.proxy().createWorldType(this);
     }
 
     String getName();
@@ -55,7 +55,7 @@ public interface CubicWorldType {
     }
 
     @SideOnly(Side.CLIENT)
-    default void onCustomize(Minecraft client, GuiCreateWorld parent) {
+    default void onCustomize(Minecraft client, WorldType worldType, GuiCreateWorld parent) {
     }
 
     default boolean isCustomizable() {

@@ -1,7 +1,7 @@
 package net.gegy1000.cubicglue.util;
 
 import net.gegy1000.cubicglue.api.ChunkPopulationWriter;
-import net.gegy1000.cubicglue.util.wrapped.BiomeDecorationWorld;
+import net.gegy1000.cubicglue.util.wrapper.BiomeDecorationWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
 

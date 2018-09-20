@@ -1,6 +1,7 @@
 package net.gegy1000.cubicglue;
 
 import mcp.MethodsReturnNonnullByDefault;
+import net.gegy1000.cubicglue.api.ColumnGenerator;
 import net.gegy1000.cubicglue.api.CubicChunkGenerator;
 import net.gegy1000.cubicglue.primer.GluedColumnPopulationWriter;
 import net.gegy1000.cubicglue.primer.GluedColumnPrimeWriter;
@@ -21,7 +22,7 @@ import java.util.List;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-public class GluedColumnGenerator implements IChunkGenerator {
+public class GluedColumnGenerator implements IChunkGenerator, ColumnGenerator {
     private final World world;
     private final CubicChunkGenerator generator;
 
@@ -35,11 +36,7 @@ public class GluedColumnGenerator implements IChunkGenerator {
     @Override
     public Chunk generateChunk(int x, int z) {
         ChunkPrimer primer = new ChunkPrimer();
-
-        for (int y = 0; y < 16; y++) {
-            CubicPos pos = new CubicPos(x, y, z);
-            this.generator.prime(pos, new GluedColumnPrimeWriter(primer, pos));
-        }
+        this.primeColumnTerrain(x, z, primer);
 
         Chunk chunk = new Chunk(this.world, primer, x, z);
         this.populateBiomes(chunk);
@@ -47,6 +44,14 @@ public class GluedColumnGenerator implements IChunkGenerator {
         chunk.generateSkylightMap();
 
         return chunk;
+    }
+
+    @Override
+    public void primeColumnTerrain(int x, int z, ChunkPrimer primer) {
+        for (int y = 0; y < 16; y++) {
+            CubicPos pos = new CubicPos(x, y, z);
+            this.generator.prime(pos, new GluedColumnPrimeWriter(primer, pos));
+        }
     }
 
     private void populateBiomes(Chunk chunk) {

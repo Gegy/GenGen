@@ -1,4 +1,4 @@
-package net.gegy1000.cubicglue.util.wrapped;
+package net.gegy1000.cubicglue.util.wrapper;
 
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.cubicglue.util.CubicPos;

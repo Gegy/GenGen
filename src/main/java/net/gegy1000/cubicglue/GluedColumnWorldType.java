@@ -88,7 +88,7 @@ public class GluedColumnWorldType extends WorldType {
     @Override
     @SideOnly(Side.CLIENT)
     public void onCustomizeButton(Minecraft client, GuiCreateWorld parent) {
-        this.worldType.onCustomize(client, parent);
+        this.worldType.onCustomize(client, this, parent);
     }
 
     @Override

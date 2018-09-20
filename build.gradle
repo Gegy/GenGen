@@ -35,6 +35,7 @@ repositories {
 
 dependencies {
   compileOnly "io.github.opencubicchunks:cubicchunks-api:1.12.2-0.0-SNAPSHOT"
+  compileOnly 'io.github.opencubicchunks:cubicchunks:1.12.2-0.0-SNAPSHOT'
 }
 
 jar {

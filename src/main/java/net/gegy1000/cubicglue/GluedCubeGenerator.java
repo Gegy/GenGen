@@ -5,7 +5,9 @@ import io.github.opencubicchunks.cubicchunks.api.world.ICube;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.CubePrimer;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import mcp.MethodsReturnNonnullByDefault;
+import net.gegy1000.cubicglue.api.ColumnGenerator;
 import net.gegy1000.cubicglue.api.CubicChunkGenerator;
+import net.gegy1000.cubicglue.primer.GluedColumnPrimeWriter;
 import net.gegy1000.cubicglue.primer.GluedCubePopulationWriter;
 import net.gegy1000.cubicglue.primer.GluedCubePrimeWriter;
 import net.gegy1000.cubicglue.util.CubicPos;
@@ -15,6 +17,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.ChunkPrimer;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -23,7 +26,7 @@ import java.util.List;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-public class GluedCubeGenerator implements ICubeGenerator {
+public class GluedCubeGenerator implements ICubeGenerator, ColumnGenerator {
     private final World world;
     private final CubicChunkGenerator generator;
 
@@ -50,6 +53,14 @@ public class GluedCubeGenerator implements ICubeGenerator {
         byte[] biomeArray = chunk.getBiomeArray();
         for (int i = 0; i < this.biomeBuffer.length; i++) {
             biomeArray[i] = (byte) Biome.getIdForBiome(this.biomeBuffer[i]);
+        }
+    }
+
+    @Override
+    public void primeColumnTerrain(int x, int z, ChunkPrimer primer) {
+        for (int y = 0; y < 16; y++) {
+            CubicPos pos = new CubicPos(x, y, z);
+            this.generator.prime(pos, new GluedColumnPrimeWriter(primer, pos));
         }
     }
 
