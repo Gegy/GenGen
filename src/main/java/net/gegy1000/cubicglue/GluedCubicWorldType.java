@@ -28,7 +28,7 @@ public class GluedCubicWorldType extends GluedColumnWorldType implements ICubicW
 
     @Override
     public IntRange calculateGenerationHeightRange(WorldServer world) {
-        return new IntRange(0, Short.MAX_VALUE);
+        return new IntRange(0, this.worldType.calculateMaxGenerationHeight(world));
     }
 
     @Override

@@ -13,13 +13,11 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.IChunkGenerator;
-import net.minecraftforge.event.ForgeEventFactory;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
@@ -27,14 +25,11 @@ public class GluedColumnGenerator implements IChunkGenerator {
     private final World world;
     private final CubicChunkGenerator generator;
 
-    private final Random random;
-
     private Biome[] biomeBuffer = new Biome[256];
 
     public GluedColumnGenerator(World world, CubicChunkGenerator generator) {
         this.world = world;
         this.generator = generator;
-        this.random = new Random(world.getSeed());
     }
 
     @Override
@@ -64,20 +59,12 @@ public class GluedColumnGenerator implements IChunkGenerator {
 
     @Override
     public void populate(int x, int z) {
-        this.random.setSeed(this.world.getSeed());
-
-        long seedX = this.random.nextLong() / 2 * 2 + 1;
-        long seedZ = this.random.nextLong() / 2 * 2 + 1;
-        this.random.setSeed(x * seedX + z * seedZ ^ this.world.getSeed());
-
-        ForgeEventFactory.onChunkPopulate(true, this, this.world, this.random, x, z, false);
-
-        for (int y = 0; y < 16; y++) {
-            CubicPos pos = new CubicPos(x, y, z);
-            this.generator.populate(pos, new GluedColumnPopulationWriter(this.world, pos));
-        }
-
-        ForgeEventFactory.onChunkPopulate(false, this, this.world, this.random, x, z, false);
+        CubicGlue.events().populate(this.world, new CubicPos(x, 0, z), () -> {
+            for (int y = 0; y < 16; y++) {
+                CubicPos pos = new CubicPos(x, y, z);
+                this.generator.populate(pos, new GluedColumnPopulationWriter(this.world, pos));
+            }
+        });
     }
 
     @Override

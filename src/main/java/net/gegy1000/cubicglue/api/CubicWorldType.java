@@ -38,6 +38,10 @@ public interface CubicWorldType {
 
     BiomeProvider createBiomeProvider(World world);
 
+    default int calculateMaxGenerationHeight(WorldServer world) {
+        return Short.MAX_VALUE;
+    }
+
     default double getHorizon(World world) {
         return 63.0;
     }
