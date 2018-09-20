@@ -4,7 +4,6 @@ import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.cubicglue.GluedColumnGenerator;
 import net.gegy1000.cubicglue.GluedCubeGenerator;
-import net.gegy1000.cubicglue.util.CubicPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -14,7 +13,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public interface CubicChunkGenerator {
+public interface CubicChunkGenerator extends CubicChunkPrimer, CubicChunkPopulator {
     @Nullable
     static CubicChunkGenerator unwrap(IChunkGenerator generator) {
         if (generator instanceof GluedColumnGenerator) {
@@ -30,10 +29,6 @@ public interface CubicChunkGenerator {
         }
         return null;
     }
-
-    void prime(CubicPos pos, CubicChunkPrimer primer);
-
-    void populate(CubicPos pos);
 
     Biome[] populateBiomes(ChunkPos pos, Biome[] buffer);
 }

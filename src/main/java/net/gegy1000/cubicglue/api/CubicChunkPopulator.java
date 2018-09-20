@@ -7,6 +7,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-public interface CubicChunkPrimer {
-    void prime(CubicPos pos, ChunkPrimeWriter writer);
+public interface CubicChunkPopulator {
+    void populate(CubicPos pos, ChunkPopulationWriter writer);
 }

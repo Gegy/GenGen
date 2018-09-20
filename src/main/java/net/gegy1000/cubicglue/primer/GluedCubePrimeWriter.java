@@ -1,21 +1,21 @@
 package net.gegy1000.cubicglue.primer;
 
+import io.github.opencubicchunks.cubicchunks.api.worldgen.CubePrimer;
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.cubicglue.api.CubicChunkPrimer;
+import net.gegy1000.cubicglue.api.ChunkPrimeWriter;
 import net.gegy1000.cubicglue.util.CubicPos;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.world.chunk.ChunkPrimer;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-public class GluedColumnPrimer implements CubicChunkPrimer {
-    private final ChunkPrimer primer;
+public class GluedCubePrimeWriter implements ChunkPrimeWriter {
+    private final CubePrimer primer;
     private final CubicPos pos;
 
-    public GluedColumnPrimer(ChunkPrimer primer, CubicPos pos) {
+    public GluedCubePrimeWriter(CubePrimer primer, CubicPos pos) {
         this.primer = primer;
         this.pos = pos;
     }

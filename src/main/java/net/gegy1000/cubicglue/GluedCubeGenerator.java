@@ -4,9 +4,11 @@ import io.github.opencubicchunks.cubicchunks.api.util.Box;
 import io.github.opencubicchunks.cubicchunks.api.world.ICube;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.CubePrimer;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
+import io.github.opencubicchunks.cubicchunks.api.worldgen.populator.CubePopulatorEvent;
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.cubicglue.api.CubicChunkGenerator;
-import net.gegy1000.cubicglue.primer.GluedCubePrimer;
+import net.gegy1000.cubicglue.primer.GluedCubePopulationWriter;
+import net.gegy1000.cubicglue.primer.GluedCubePrimeWriter;
 import net.gegy1000.cubicglue.util.CubicPos;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.math.BlockPos;
@@ -14,6 +16,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.common.MinecraftForge;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -38,7 +41,7 @@ public class GluedCubeGenerator implements ICubeGenerator {
         CubePrimer primer = new CubePrimer();
 
         CubicPos pos = new CubicPos(x, y, z);
-        this.generator.prime(pos, new GluedCubePrimer(primer, pos));
+        this.generator.prime(pos, new GluedCubePrimeWriter(primer, pos));
 
         return primer;
     }
@@ -54,6 +57,10 @@ public class GluedCubeGenerator implements ICubeGenerator {
 
     @Override
     public void populate(ICube cube) {
+        if (!MinecraftForge.EVENT_BUS.post(new CubePopulatorEvent(this.world, cube))) {
+            CubicPos pos = new CubicPos(cube.getX(), cube.getY(), cube.getZ());
+            this.generator.populate(pos, new GluedCubePopulationWriter(this.world, pos));
+        }
     }
 
     @Override
