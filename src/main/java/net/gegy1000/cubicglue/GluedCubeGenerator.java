@@ -4,6 +4,7 @@ import io.github.opencubicchunks.cubicchunks.api.util.Box;
 import io.github.opencubicchunks.cubicchunks.api.world.ICube;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.CubePrimer;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
+import io.github.opencubicchunks.cubicchunks.core.world.cube.Cube;
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.cubicglue.api.ColumnGenerator;
 import net.gegy1000.cubicglue.api.CubicChunkGenerator;
@@ -65,6 +66,10 @@ public class GluedCubeGenerator implements ICubeGenerator, ColumnGenerator {
 
     @Override
     public void populate(ICube cube) {
+        if (cube instanceof Cube) {
+            ((Cube) cube).setPopulated(true);
+        }
+
         CubicPos pos = new CubicPos(cube.getX(), cube.getY(), cube.getZ());
         CubicGlue.events(this.world).populate(this.world, pos, () -> {
             this.generator.populate(pos, new GluedCubePopulationWriter(this.world, pos));
@@ -73,7 +78,7 @@ public class GluedCubeGenerator implements ICubeGenerator, ColumnGenerator {
 
     @Override
     public Box getFullPopulationRequirements(ICube cube) {
-        return NO_REQUIREMENT;
+        return RECOMMENDED_FULL_POPULATOR_REQUIREMENT;
     }
 
     @Override
