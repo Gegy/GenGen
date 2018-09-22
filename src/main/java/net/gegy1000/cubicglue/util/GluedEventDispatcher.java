@@ -18,6 +18,8 @@ public interface GluedEventDispatcher {
 
     void populateFeature(CubicPos pos, ChunkPopulationWriter writer, PopulateChunkEvent.Populate.EventType type, Runnable populate);
 
+    void spawnEntities(CubicPos pos, ChunkPopulationWriter writer, Runnable populate);
+
     class Vanilla implements GluedEventDispatcher {
         private final Random random = new Random(0);
 
@@ -52,6 +54,11 @@ public interface GluedEventDispatcher {
             }
         }
 
+        @Override
+        public void spawnEntities(CubicPos pos, ChunkPopulationWriter writer, Runnable populate) {
+            this.populateFeature(pos, writer, PopulateChunkEvent.Populate.EventType.ANIMALS, populate);
+        }
+
         private void initSeed(World world, CubicPos pos) {
             this.random.setSeed(world.getSeed());
 
@@ -72,6 +79,11 @@ public interface GluedEventDispatcher {
 
         @Override
         public void populateFeature(CubicPos pos, ChunkPopulationWriter writer, PopulateChunkEvent.Populate.EventType type, Runnable populate) {
+            populate.run();
+        }
+
+        @Override
+        public void spawnEntities(CubicPos pos, ChunkPopulationWriter writer, Runnable populate) {
             populate.run();
         }
     }

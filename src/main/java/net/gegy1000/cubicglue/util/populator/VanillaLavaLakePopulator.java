@@ -28,7 +28,7 @@ public class VanillaLavaLakePopulator extends VanillaChunkPopulator {
             int offsetY = this.random.nextInt(this.random.nextInt(writer.getGlobal().getHeight() - 8) + 8);
 
             if (offsetY >= pos.getMinY() && offsetY <= pos.getMaxY()) {
-                CubicGlue.events().populateFeature(pos, writer, PopulateChunkEvent.Populate.EventType.LAVA, () -> {
+                CubicGlue.events(writer.getGlobal()).populateFeature(pos, writer, PopulateChunkEvent.Populate.EventType.LAVA, () -> {
                     int offsetX = this.random.nextInt(16);
                     int offsetZ = this.random.nextInt(16);
 

@@ -17,7 +17,6 @@ import net.minecraft.world.gen.IChunkGenerator;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.Collections;
 import java.util.List;
 
 @MethodsReturnNonnullByDefault
@@ -64,7 +63,7 @@ public class GluedColumnGenerator implements IChunkGenerator, ColumnGenerator {
 
     @Override
     public void populate(int x, int z) {
-        CubicGlue.events().populate(this.world, new CubicPos(x, 0, z), () -> {
+        CubicGlue.events(this.world).populate(this.world, new CubicPos(x, 0, z), () -> {
             for (int y = 0; y < 16; y++) {
                 CubicPos pos = new CubicPos(x, y, z);
                 this.generator.populate(pos, new GluedColumnPopulationWriter(this.world, pos));
@@ -79,7 +78,7 @@ public class GluedColumnGenerator implements IChunkGenerator, ColumnGenerator {
 
     @Override
     public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType type, BlockPos pos) {
-        return Collections.emptyList();
+        return this.generator.getPossibleCreatures(type, pos);
     }
 
     @Nullable

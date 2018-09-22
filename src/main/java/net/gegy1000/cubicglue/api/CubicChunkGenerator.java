@@ -5,6 +5,8 @@ import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.cubicglue.CubicGlue;
 import net.gegy1000.cubicglue.GluedColumnGenerator;
 import net.gegy1000.cubicglue.GluedCubeGenerator;
+import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -12,13 +14,14 @@ import net.minecraft.world.gen.IChunkGenerator;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.List;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 public interface CubicChunkGenerator extends CubicChunkPrimer, CubicChunkPopulator {
     @Nullable
     static CubicChunkGenerator unwrap(World world) {
-        return CubicGlue.proxy().unwrapChunkGenerator(world);
+        return CubicGlue.proxy(world).unwrapChunkGenerator(world);
     }
 
     @Nullable
@@ -38,4 +41,6 @@ public interface CubicChunkGenerator extends CubicChunkPrimer, CubicChunkPopulat
     }
 
     Biome[] populateBiomes(ChunkPos pos, Biome[] buffer);
+
+    List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType type, BlockPos pos);
 }

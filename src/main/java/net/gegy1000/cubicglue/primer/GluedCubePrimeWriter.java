@@ -23,14 +23,14 @@ public class GluedCubePrimeWriter implements ChunkPrimeWriter {
     @Override
     public void set(int x, int y, int z, IBlockState state) {
         if (y >= this.pos.getMinY() && y <= this.pos.getMaxY()) {
-            this.primer.setBlockState(x & 0xF, y, z & 0xF, state);
+            this.primer.setBlockState(x & 0xF, y & 0xF, z & 0xF, state);
         }
     }
 
     @Override
     public IBlockState get(int x, int y, int z) {
         if (y >= this.pos.getMinY() && y <= this.pos.getMaxY()) {
-            return this.primer.getBlockState(x & 0xF, y, z & 0xF);
+            return this.primer.getBlockState(x & 0xF, y & 0xF, z & 0xF);
         } else {
             return Blocks.AIR.getDefaultState();
         }

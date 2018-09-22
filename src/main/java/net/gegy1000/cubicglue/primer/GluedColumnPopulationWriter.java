@@ -47,7 +47,7 @@ public class GluedColumnPopulationWriter implements ChunkPopulationWriter {
             nextPos = surfacePos.down();
             IBlockState state = chunk.getBlockState(nextPos);
 
-            if (state.getMaterial().blocksMovement() && !state.getBlock().isLeaves(state, this.world, nextPos) && !state.getBlock().isFoliage(this.world, nextPos)) {
+            if (state.getLightOpacity(this.world, nextPos) != 0) {
                 return surfacePos;
             }
 

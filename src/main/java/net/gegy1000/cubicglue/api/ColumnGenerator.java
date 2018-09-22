@@ -13,7 +13,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public interface ColumnGenerator {
     @Nullable
     static ColumnGenerator unwrap(World world) {
-        return CubicGlue.proxy().unwrapColumnGenerator(world);
+        return CubicGlue.proxy(world).unwrapColumnGenerator(world);
     }
 
     void primeColumnTerrain(int x, int z, ChunkPrimer primer);

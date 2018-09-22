@@ -26,7 +26,7 @@ public class VanillaLakePopulator extends VanillaChunkPopulator {
     @Override
     protected void populate(CubicPos pos, ChunkPopulationWriter writer, Biome biome) {
         if (biome != Biomes.DESERT && this.horizontalRandom.nextInt(16) == 0) {
-            CubicGlue.events().populateFeature(pos, writer, PopulateChunkEvent.Populate.EventType.LAKE, () -> {
+            CubicGlue.events(writer.getGlobal()).populateFeature(pos, writer, PopulateChunkEvent.Populate.EventType.LAKE, () -> {
                 int offsetX = this.random.nextInt(16);
                 int offsetY = this.random.nextInt(16);
                 int offsetZ = this.random.nextInt(16);

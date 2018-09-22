@@ -1,5 +1,6 @@
 package net.gegy1000.cubicglue.util;
 
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 
 public class CubicPos {
@@ -70,5 +71,37 @@ public class CubicPos {
         int minY = this.getMinY();
         int minZ = this.getMinZ();
         return x >= minX && y >= minY && z >= minZ && x < minX + 16 && y < minY + 16 && z < minZ + 16;
+    }
+
+    public CubicPos add(CubicPos pos) {
+        return new CubicPos(this.x + pos.x, this.y + pos.y, this.z + pos.z);
+    }
+
+    public CubicPos add(int x, int y, int z) {
+        return new CubicPos(this.x + x, this.y + y, this.z + z);
+    }
+
+    public CubicPos offset(EnumFacing facing) {
+        return this.add(facing.getXOffset(), facing.getYOffset(), facing.getZOffset());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof CubicPos) {
+            CubicPos pos = (CubicPos) o;
+            return this.x == pos.x && this.y == pos.y && this.z == pos.z;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = this.x;
+        result = 31 * result + this.y;
+        result = 31 * result + this.z;
+        return result;
     }
 }
