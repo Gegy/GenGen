@@ -21,6 +21,7 @@ public class BiomeDecorationWorld extends World {
         super(parent.getSaveHandler(), parent.getWorldInfo(), parent.provider, parent.profiler, parent.isRemote);
         this.parent = parent;
         this.decorationChunk = decorationChunk;
+        this.chunkProvider = this.parent.getChunkProvider();
     }
 
     @Override
@@ -68,15 +69,20 @@ public class BiomeDecorationWorld extends World {
     }
 
     @Override
+    public IChunkProvider getChunkProvider() {
+        return this.parent.getChunkProvider();
+    }
+
+    @Override
     protected boolean isChunkLoaded(int x, int z, boolean allowEmpty) {
         return this.getChunkProvider().getLoadedChunk(x, z) != null;
     }
 
     private boolean contains(BlockPos pos) {
-        int minX = this.decorationChunk.getMinX();
-        int minY = this.decorationChunk.getMinY();
-        int minZ = this.decorationChunk.getMinZ();
+        int minX = this.decorationChunk.getCenterX();
+        int minY = this.decorationChunk.getCenterY();
+        int minZ = this.decorationChunk.getCenterZ();
         return pos.getX() >= minX && pos.getY() >= minY && pos.getZ() >= minZ
-                && pos.getX() < minX + 32 && pos.getY() < minY + 32 && pos.getZ() < minZ + 32;
+                && pos.getX() < minX + 16 && pos.getY() < minY + 16 && pos.getZ() < minZ + 16;
     }
 }
