@@ -14,9 +14,9 @@ buildscript {
 apply plugin: "net.minecraftforge.gradle.forge"
 apply plugin: "maven-publish"
 
-version = "0.3.0-SNAPSHOT"
+version = "0.1.0-SNAPSHOT"
 group = "net.gegy1000"
-archivesBaseName = "cubic-glue"
+archivesBaseName = "gengen"
 sourceCompatibility = targetCompatibility = "1.8"
 
 minecraft {
@@ -30,6 +30,9 @@ repositories {
   jcenter()
   maven {
     url = "https://oss.sonatype.org/content/repositories/public/"
+  }
+  maven {
+    url = "https://repo.spongepowered.org/maven/"
   }
 }
 
@@ -58,7 +61,7 @@ publishing {
   publications {
     mavenJava(MavenPublication) {
       groupId "net.gegy1000"
-      artifactId "cubic-glue"
+      artifactId "gengen"
       version project.version
 
       from components.java
