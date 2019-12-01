@@ -75,22 +75,23 @@ public class CubeGeneratorImpl implements ICubeGenerator {
     }
 
     @Override
+    public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType type, BlockPos pos) {
+        return this.generator.getPossibleCreatures(type, pos);
+    }
+
+    @Override
     public void recreateStructures(ICube cube) {
+        this.generator.recreateStructures(new CubicPos(cube.getX(), cube.getY(), cube.getZ()));
     }
 
     @Override
     public void recreateStructures(Chunk column) {
     }
 
-    @Override
-    public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType type, BlockPos pos) {
-        return this.generator.getPossibleCreatures(type, pos);
-    }
-
     @Nullable
     @Override
     public BlockPos getClosestStructure(String name, BlockPos pos, boolean findUnexplored) {
-        return null;
+        return this.generator.getClosestStructure(name, pos, findUnexplored);
     }
 
     public GenericChunkGenerator getInner() {

@@ -3,8 +3,8 @@ package net.gegy1000.gengen.api;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.gengen.core.GenGen;
-import net.gegy1000.gengen.core.impl.vanilla.ColumnGeneratorImpl;
 import net.gegy1000.gengen.core.impl.cubic.CubeGeneratorImpl;
+import net.gegy1000.gengen.core.impl.vanilla.ColumnGeneratorImpl;
 import net.gegy1000.gengen.core.support.SpongeSupport;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.math.BlockPos;
@@ -45,4 +45,11 @@ public interface GenericChunkGenerator extends GenericChunkPrimer, GenericChunkP
     Biome[] populateBiomes(ChunkPos pos, Biome[] buffer);
 
     List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType type, BlockPos pos);
+
+    void recreateStructures(CubicPos pos);
+
+    @Nullable
+    BlockPos getClosestStructure(String name, BlockPos pos, boolean findUnexplored);
+
+    boolean isInsideStructure(String name, BlockPos pos);
 }

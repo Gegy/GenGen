@@ -65,28 +65,31 @@ public class ColumnGeneratorImpl implements IChunkGenerator {
     }
 
     @Override
-    public boolean generateStructures(Chunk chunk, int x, int z) {
-        return false;
-    }
-
-    @Override
     public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType type, BlockPos pos) {
         return this.generator.getPossibleCreatures(type, pos);
     }
 
+    @Override
+    public boolean generateStructures(Chunk chunk, int x, int z) {
+        return false;
+    }
+
     @Nullable
     @Override
-    public BlockPos getNearestStructurePos(World world, String structureName, BlockPos position, boolean findUnexplored) {
-        return null;
+    public BlockPos getNearestStructurePos(World world, String name, BlockPos pos, boolean findUnexplored) {
+        return this.generator.getClosestStructure(name, pos, findUnexplored);
     }
 
     @Override
     public void recreateStructures(Chunk chunk, int x, int z) {
+        for (int y = 0; y < 16; y++) {
+            this.generator.recreateStructures(new CubicPos(x, y, z));
+        }
     }
 
     @Override
-    public boolean isInsideStructure(World world, String structureName, BlockPos pos) {
-        return false;
+    public boolean isInsideStructure(World world, String name, BlockPos pos) {
+        return this.generator.isInsideStructure(name, pos);
     }
 
     public GenericChunkGenerator getInner() {
