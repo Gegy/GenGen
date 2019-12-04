@@ -24,12 +24,11 @@
 package net.gegy1000.gengen.util.primer;
 
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
-import net.gegy1000.gengen.api.generator.GenericChunkPrimer;
 import net.gegy1000.gengen.api.CubicPos;
+import net.gegy1000.gengen.api.generator.GenericChunkPrimer;
+import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
 import net.minecraft.world.World;
 
-import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Random;
 
@@ -38,57 +37,50 @@ import java.util.Random;
  * <p>
  * The basic idea is to loop over all cubes within some radius (max structure size) and figure out which parts of
  * structures starting there intersect currently generated cube.
- *
+ * <p>
  * Adapted from https://github.com/OpenCubicChunks/CubicWorldGen
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public abstract class GenericStructurePrimer implements GenericChunkPrimer {
-
-    /** The number of Chunks to gen-check in any given direction. */
-    protected int range = 8;
-
-    /** The RNG used by the MapGen classes. */
-    @Nonnull protected Random rand = new Random();
-
-    /** This world object. */
-    protected World world;
-
-    /** The minimum spacing of structures. */
-    protected final int spacing;
+public interface GenericStructurePrimer extends GenericChunkPrimer {
 
     /**
-     * @param world The world we will be generating in
-     * @param spacing The minimum spacing. Structures that aren't generated at integer multiple coords of this value will be skipped.
+     * Generates structures in given cube, with supplied parameters and handler
+     *
+     * @param world the world we are operating within
+     * @param writer the block buffer to be filled with blocks (Cube)
+     * @param cubePos position of the cube to generate structures in
+     * @param handler generation handler, to generate blocks for a given structure source point, in the specified cube
+     * @param range horizontal search distance for structure sources (in cubes)
+     * @param spacingBitCount only structure sources on a grid of size 2^spacingBitCount will be considered for generation
      */
-    protected GenericStructurePrimer(World world, int spacing) {
-        this.world = world;
-        this.spacing = spacing;
-    }
+    default void primeStructure(
+            World world,
+            ChunkPrimeWriter writer, CubicPos cubePos, Handler handler,
+            int range, int spacingBitCount
+    ) {
 
-    @Override
-    public void primeChunk(CubicPos pos, ChunkPrimeWriter writer) {
+        Random rand = new Random(world.getSeed());
 
-        this.rand.setSeed(world.getSeed());
-        //used to randomize contribution of each coordinate to the cube seed
-        //without these swapping x/y/z coordinates would result in the same seed
-        //so structures would generate symmetrically
-        long randXMul = this.rand.nextLong();
-        long randYMul = this.rand.nextLong();
-        long randZMul = this.rand.nextLong();
+        long randXMul = rand.nextLong();
+        long randYMul = rand.nextLong();
+        long randZMul = rand.nextLong();
 
-        // as an optimization, this structure looks for structures only in every second coordinate on each axis
-        // ensure all origin points are always odd (could also be even, that would be & ~1),
+        int spacing = 1 << spacingBitCount;
+        int spacingBits = spacing - 1;
+
+        // as an optimization, this structure looks for structures only in every Nth coordinate on each axis
+        // this ensures that all origin points are always a multiple of 2^bits
         // this way positions used as origin position are consistent across chunks
-        // increase scan radius by 1 because `|1` introduces offset to even X/Y/Z coords
-        int radius = this.range + 1;
-        int cubeXOriginBase = pos.getX() | 1;
-        int cubeYOriginBase = pos.getY() | 1;
-        int cubeZOriginBase = pos.getZ() | 1;
+        // With "| spacingBits" also on radius, the "1" bits cancel out to zero with "basePos - radius"
+        // because it's an OR, it can never decrease radius
+        int radius = range | spacingBits;
+        int cubeXOriginBase = cubePos.getX() | spacingBits;
+        int cubeYOriginBase = cubePos.getY() | spacingBits;
+        int cubeZOriginBase = cubePos.getZ() | spacingBits;
 
         long randSeed = world.getSeed();
 
-        int spacing = this.spacing;
         //x/y/zOrigin is location of the structure "center", and cubeX/Y/Z is the currently generated cube
         for (int xOrigin = cubeXOriginBase - radius; xOrigin <= cubeXOriginBase + radius; xOrigin += spacing) {
             long randX = xOrigin * randXMul ^ randSeed;
@@ -96,24 +88,28 @@ public abstract class GenericStructurePrimer implements GenericChunkPrimer {
                 long randY = yOrigin * randYMul ^ randX;
                 for (int zOrigin = cubeZOriginBase - radius; zOrigin <= cubeZOriginBase + radius; zOrigin += spacing) {
                     long randZ = zOrigin * randZMul ^ randY;
-                    this.rand.setSeed(randZ);
-                    this.generate(writer, xOrigin, yOrigin, zOrigin, pos);
+                    rand.setSeed(randZ);
+                    handler.generate(rand, writer, xOrigin, yOrigin, zOrigin, cubePos);
                 }
             }
-
         }
     }
 
-    /**
-     * Generates blocks in a given cube for a structure that starts at given origin position.
-     *
-     * @param writer the block buffer to be filled with blocks (Cube)
-     * @param structureX x coordinate of the starting position of currently generated structure
-     * @param structureY y coordinate of the starting position of currently generated structure
-     * @param structureZ z coordinate of the starting position of currently generated structure
-     * @param generatedCubePos position of the cube to fill with blocks
-     */
-    protected abstract void generate(ChunkPrimeWriter writer,
-                                     int structureX, int structureY, int structureZ,
-                                     CubicPos generatedCubePos);
+    @FunctionalInterface
+    interface Handler {
+        /**
+         * Generates blocks in a given cube for a structure that starts at given origin position.
+         *
+         * @param rand random number generator with seed for the starting position
+         * @param writer the block buffer to be filled with blocks (Cube)
+         * @param structureX x coordinate of the starting position of currently generated structure
+         * @param structureY y coordinate of the starting position of currently generated structure
+         * @param structureZ z coordinate of the starting position of currently generated structure
+         * @param generatedCubePos position of the cube to fill with blocks
+         */
+        void generate(Random rand, ChunkPrimeWriter writer,
+                      int structureX, int structureY, int structureZ,
+                      CubicPos generatedCubePos
+        );
+    }
 }

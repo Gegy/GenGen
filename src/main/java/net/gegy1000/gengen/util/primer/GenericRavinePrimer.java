@@ -24,9 +24,9 @@
 package net.gegy1000.gengen.util.primer;
 
 import mcp.MethodsReturnNonnullByDefault;
+import net.gegy1000.gengen.api.CubicPos;
 import net.gegy1000.gengen.api.HeightFunction;
 import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
-import net.gegy1000.gengen.api.CubicPos;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.World;
@@ -44,7 +44,8 @@ import static net.minecraft.util.math.MathHelper.*;
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class GenericRavinePrimer extends GenericStructurePrimer {
+public class GenericRavinePrimer implements GenericStructurePrimer {
+    private static final int RANGE = 8;
 
     /**
      * Vanilla value: 50
@@ -121,9 +122,11 @@ public class GenericRavinePrimer extends GenericStructurePrimer {
     /**
      * Controls which blocks can be replaced by cave
      */
-    @Nonnull private static final Predicate<IBlockState> isBlockReplaceable = (state ->
+    @Nonnull
+    private static final Predicate<IBlockState> isBlockReplaceable = (state ->
             state.getBlock() == Blocks.STONE || state.getBlock() == Blocks.DIRT || state.getBlock() == Blocks.GRASS);
 
+    private final World world;
     private final HeightFunction surfaceFunction;
 
     /**
@@ -131,15 +134,20 @@ public class GenericRavinePrimer extends GenericStructurePrimer {
      * <p>
      * For cubic chunks the height value used wraps around.
      */
-    @Nonnull private float[] widthDecreaseFactors = new float[1024];
+    @Nonnull
+    private float[] widthDecreaseFactors = new float[1024];
 
     public GenericRavinePrimer(World world, HeightFunction surfaceFunction) {
-        super(world, 2);
+        this.world = world;
         this.surfaceFunction = surfaceFunction;
     }
 
     @Override
-    protected void generate(ChunkPrimeWriter writer, int structureX, int structureY, int structureZ, CubicPos generatedCubePos) {
+    public void primeChunk(CubicPos pos, ChunkPrimeWriter writer) {
+        this.primeStructure(this.world, writer, pos, this::generate, RANGE, 1);
+    }
+
+    protected void generate(Random rand, ChunkPrimeWriter writer, int structureX, int structureY, int structureZ, CubicPos generatedCubePos) {
         int surfaceY = this.surfaceFunction.apply((structureX << 4) + 8, (structureZ << 4) + 8);
         int surfaceCubeY = surfaceY >> 4;
 
@@ -179,7 +187,7 @@ public class GenericRavinePrimer extends GenericStructurePrimer {
         float vertDirChange = 0.0F;
 
         if (maxWalkedDistance <= 0) {
-            int maxBlockRadius = (this.range - 1) << 4;
+            int maxBlockRadius = (RANGE - 1) << 4;
             maxWalkedDistance = maxBlockRadius - rand.nextInt(maxBlockRadius / 4);
         }
 
@@ -196,7 +204,7 @@ public class GenericRavinePrimer extends GenericStructurePrimer {
             walkedDistance = startWalkedDistance;
         }
 
-        this.widthDecreaseFactors = generateRavineWidthFactors(rand);
+        this.widthDecreaseFactors = this.generateRavineWidthFactors(rand);
 
         for (; walkedDistance < maxWalkedDistance; ++walkedDistance) {
             float fractionWalked = walkedDistance / (float) maxWalkedDistance;
@@ -249,7 +257,7 @@ public class GenericRavinePrimer extends GenericStructurePrimer {
                 return;
             }
 
-            tryCarveBlocks(writer, generatedCubePos,
+            this.tryCarveBlocks(writer, generatedCubePos,
                     ravineX, ravineY, ravineZ,
                     ravineSizeHoriz, ravineSizeVert, lavaHeight);
 
@@ -294,7 +302,7 @@ public class GenericRavinePrimer extends GenericStructurePrimer {
                 (b) -> b.getBlock() == Blocks.WATER || b.getBlock() == Blocks.FLOWING_WATER);
 
         if (!hitLiquid) {
-            carveBlocks(writer, generatedCubePos, ravineX, ravineY, ravineZ,
+            this.carveBlocks(writer, generatedCubePos, ravineX, ravineY, ravineZ,
                     ravineSizeHoriz, ravineSizeVert, boundingBox, lavaHeight);
         }
     }
@@ -354,7 +362,7 @@ public class GenericRavinePrimer extends GenericStructurePrimer {
         float[] values = new float[1024];
         float value = 1.0F;
 
-        for (int i = 0; i < 16*16; ++i) {
+        for (int i = 0; i < 16 * 16; ++i) {
             //~33% probability that the value will change at that height
             if (i == 0 || rand.nextInt(3) == 0) {
                 //value = 1.xxx, lower = higher probability -> Wider parts are more common.

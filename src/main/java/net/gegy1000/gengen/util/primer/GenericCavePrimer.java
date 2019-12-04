@@ -1,190 +1,437 @@
+/*
+ *  This file is part of Cubic World Generation, licensed under the MIT License (MIT).
+ *
+ *  Copyright (c) 2015 contributors
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 package net.gegy1000.gengen.util.primer;
 
-import com.google.common.base.MoreObjects;
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.gengen.api.CubicPos;
 import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Biomes;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
 
+import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Random;
+import java.util.function.Predicate;
 
+import static io.github.opencubicchunks.cubicchunks.api.util.Coords.cubeToMinBlock;
+import static io.github.opencubicchunks.cubicchunks.api.util.Coords.localToBlock;
+import static java.lang.Math.max;
+import static net.gegy1000.gengen.util.primer.CubicStructurePrimeUtil.normalizedDistance;
+import static net.minecraft.util.math.MathHelper.*;
+
+/**
+ * Adapted from https://github.com/OpenCubicChunks/CubicWorldGen
+ * Modified Minecraft cave generation code. Based on Robinton's cave generation implementation.
+ */
+//TODO: Fix code duplication beterrn cave and cave generators
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class GenericCavePrimer extends GenericStructurePrimer {
-    private static final int SPAWN_CHANCE = 16 * 7 / (2 * 2 * 2);
+public class GenericCavePrimer implements GenericStructurePrimer {
+    private static final int RANGE = 8;
 
-    private static final IBlockState AIR = Blocks.AIR.getDefaultState();
+    /**
+     * 1 in CAVE_RARITY attempts will result in generating any caves at all
+     * <p>
+     * Vanilla value: 7 Multiply by 16 and divide by 8: there are 16 cubes in a vanilla chunk, but only one cube per 8
+     * has caves generated
+     */
+    private static final int CAVE_RARITY = 16 * 7 / (2 * 2 * 2);
+
+    /**
+     * Maximum amount of starting nodes
+     */
+    private static final int MAX_INIT_NODES = 14;
+
+    /**
+     * 1 in LARGE_NODE_RARITY initial attempts will result in large node
+     */
+    private static final int LARGE_NODE_RARITY = 4;
+
+    /**
+     * The maximum amount of additional branches after generating large node. Random value between 0 and
+     * LARGE_NODE_MAX_BRANCHES is chosen.
+     */
+    private static final int LARGE_NODE_MAX_BRANCHES = 4;
+
+    /**
+     * 1 in BIG_CAVE_RARITY branches will start bigger than usual
+     */
+    private static final int BIG_CAVE_RARITY = 10;
+
+    /**
+     * Value added to the size of the cave (radius)
+     */
+    private static final double CAVE_SIZE_ADD = 1.5D;
+
+    /**
+     * In 1 of STEEP_STEP_RARITY steps, cave will be flattened using STEEPER_FLATTEN_FACTOR instead of FLATTEN_FACTOR
+     */
+    private static final int STEEP_STEP_RARITY = 6;
+
+    /**
+     * After each step the Y direction component will be multiplied by this value, unless steeper cave is allowed
+     */
+    private static final float FLATTEN_FACTOR = 0.7f;
+
+    /**
+     * If steeper cave is allowed - this value will be used instead of FLATTEN_FACTOR
+     */
+    private static final float STEEPER_FLATTEN_FACTOR = 0.92f;
+
+    /**
+     * Each step cave direction angles will be changed by this fraction of values that specify how direction changes
+     */
+    private static final float DIRECTION_CHANGE_FACTOR = 0.1f;
+
+    /**
+     * This fraction of the previous value that controls horizontal direction changes will be used in next step
+     */
+    private static final float PREV_HORIZ_DIRECTION_CHANGE_WEIGHT = 0.75f;
+
+    /**
+     * This fraction of the previous value that controls vertical direction changes will be used in next step
+     */
+    private static final float PREV_VERT_DIRECTION_CHANGE_WEIGHT = 0.9f;
+
+    /**
+     * Maximum value by which horizontal cave direction randomly changes each step, lower values are much more likely.
+     */
+    private static final float MAX_ADD_DIRECTION_CHANGE_HORIZ = 4.0f;
+
+    /**
+     * Maximum value by which vertical cave direction randomly changes each step, lower values are much more likely.
+     */
+    private static final float MAX_ADD_DIRECTION_CHANGE_VERT = 2.0f;
+
+    /**
+     * 1 in this amount of steps will actually carve any blocks,
+     */
+    private static final int CARVE_STEP_RARITY = 4;
+
+    /**
+     * Relative "height" if depth floor
+     * <p>
+     * -1 results in round cave without flat floor 1 will completely fill the cave 0 will result in lower half of the
+     * cave to be filled with stone
+     */
+    private static final double CAVE_FLOOR_DEPTH = -0.7;
+
+    /**
+     * Controls which blocks can be replaced by cave
+     */
+    private static final Predicate<IBlockState> isBlockReplaceable = (state ->
+            state.getBlock() == Blocks.STONE || state.getBlock() == Blocks.DIRT || state.getBlock() == Blocks.GRASS);
+
+    private final World world;
 
     public GenericCavePrimer(World world) {
-        super(world, 2);
+        this.world = world;
     }
 
     @Override
-    protected void generate(ChunkPrimeWriter writer, int cubeXOrigin, int cubeYOrigin, int cubeZOrigin, CubicPos generatedCubePos) {
-        int nodeCount = this.rand.nextInt(this.rand.nextInt(this.rand.nextInt(15) + 1) + 1);
-        if (this.rand.nextInt(SPAWN_CHANCE) != 0) {
-            return;
-        }
+    public void primeChunk(CubicPos pos, ChunkPrimeWriter writer) {
+        this.primeStructure(this.world, writer, pos, this::generate, RANGE, 1);
+    }
 
-        for (int node = 0; node < nodeCount; node++) {
-            double nodeOriginX = (cubeXOrigin << 4) + this.rand.nextInt(16);
-            double nodeOriginY = (cubeYOrigin << 4) + this.rand.nextInt(16);
-            double nodeOriginZ = (cubeZOrigin << 4) + this.rand.nextInt(16);
+    protected void generate(Random rand, ChunkPrimeWriter writer, int cubeXOrigin, int cubeYOrigin, int cubeZOrigin, CubicPos generatedCubicPos) {
+        if (rand.nextInt(CAVE_RARITY) != 0) return;
 
-            int branchCount = 1;
-            if (this.rand.nextInt(4) == 0) {
-                this.addRoom(this.rand.nextLong(), generatedCubePos, writer, nodeOriginX, nodeOriginY, nodeOriginZ);
-                branchCount += this.rand.nextInt(4);
+        //very low probability of generating high number
+        int nodes = rand.nextInt(rand.nextInt(rand.nextInt(MAX_INIT_NODES + 1) + 1) + 1);
+
+        for (int node = 0; node < nodes; ++node) {
+            double branchStartX = localToBlock(cubeXOrigin, rand.nextInt(16));
+            double branchStartY = localToBlock(cubeYOrigin, rand.nextInt(16));
+            double branchStartZ = localToBlock(cubeZOrigin, rand.nextInt(16));
+            int subBranches = 1;
+
+            if (rand.nextInt(LARGE_NODE_RARITY) == 0) {
+                this.generateLargeNode(writer, rand, rand.nextLong(), generatedCubicPos,
+                        branchStartX, branchStartY, branchStartZ);
+                subBranches += rand.nextInt(LARGE_NODE_MAX_BRANCHES);
             }
 
-            for (int branch = 0; branch < branchCount; ++branch) {
-                float horizontalAngle = (float) (this.rand.nextFloat() * (Math.PI * 2.0F));
-                float verticalAngle = (this.rand.nextFloat() - 0.5F) * 2.0F / 8.0F;
-                float radius = this.rand.nextFloat() * 2.0F + this.rand.nextFloat();
+            for (int branch = 0; branch < subBranches; ++branch) {
+                float horizDirAngle = rand.nextFloat() * (float) Math.PI * 2.0F;
+                float vertDirAngle = (rand.nextFloat() - 0.5F) * 2.0F / 8.0F;
+                float baseHorizSize = rand.nextFloat() * 2.0F + rand.nextFloat();
 
-                if (this.rand.nextInt(10) == 0) {
-                    radius *= this.rand.nextFloat() * this.rand.nextFloat() * 3.0F + 1.0F;
+                if (rand.nextInt(BIG_CAVE_RARITY) == 0) {
+                    baseHorizSize *= rand.nextFloat() * rand.nextFloat() * 3.0F + 1.0F;
                 }
 
-                this.addTunnel(this.rand.nextLong(), generatedCubePos, writer, nodeOriginX, nodeOriginY, nodeOriginZ, radius, horizontalAngle, verticalAngle, 0, 0, 1.0);
+                int startWalkedDistance = 0;
+                int maxWalkedDistance = 0;
+                double vertCaveSizeMod = 1.0;
+
+                this.generateNode(writer, rand.nextLong(), generatedCubicPos,
+                        branchStartX, branchStartY, branchStartZ,
+                        baseHorizSize, horizDirAngle, vertDirAngle,
+                        startWalkedDistance, maxWalkedDistance, vertCaveSizeMod);
             }
         }
     }
 
-    protected void addRoom(long seed, CubicPos generatedCubePos, ChunkPrimeWriter writer, double nodeOriginX, double nodeOriginY, double nodeOriginZ) {
-        this.addTunnel(seed, generatedCubePos, writer, nodeOriginX, nodeOriginY, nodeOriginZ, 1.0F + this.rand.nextFloat() * 6.0F, 0.0F, 0.0F, -1, -1, 0.5);
+    /**
+     * Generates a flattened cave "room", usually more caves split off it
+     */
+    private void generateLargeNode(ChunkPrimeWriter cube, Random rand, long seed, CubicPos generatedCubicPos,
+                                   double x, double y, double z) {
+        float baseHorizSize = 1.0F + rand.nextFloat() * 6.0F;
+        float horizDirAngle = 0;
+        float vertDirAngle = 0;
+
+        int startWalkedDistance = -1;
+        int maxWalkedDistance = -1;
+        double vertCaveSizeMod = 0.5;
+        this.generateNode(cube, seed, generatedCubicPos, x, y, z,
+                baseHorizSize, horizDirAngle, vertDirAngle,
+                startWalkedDistance, maxWalkedDistance, vertCaveSizeMod);
     }
 
-    protected void addTunnel(long seed, CubicPos generatedCubePos, ChunkPrimeWriter writer, double nodeOriginX, double nodeOriginY, double nodeOriginZ, float radius, float horizontalAngle, float verticalAngle, int currentStep, int stepCount, double flatnessFactor) {
-        double centerCubeX = generatedCubePos.getCenterX();
-        double centerCubeY = generatedCubePos.getCenterY();
-        double centerCubeZ = generatedCubePos.getCenterZ();
+    /**
+     * Recursively generates a node in the current cave system tree.
+     *
+     * @param cube block buffer to modify
+     * @param seed random seed to use
+     * @param generatedCubicPos position of the cube to modify
+     * @param caveX starting x coordinate of the cave
+     * @param caveY starting Y coordinate of the cave
+     * @param caveZ starting Z coordinate of the cave
+     * @param baseCaveSize initial value for cave size, size decreases as cave goes further
+     * @param horizDirAngle horizontal direction angle
+     * @param vertCaveSizeMod vertical direction angle
+     * @param startWalkedDistance the amount of steps the cave already went forwards, used in recursive step. -1 means
+     * that there will be only one step
+     * @param maxWalkedDistance maximum distance the cave can go forwards, <= 0 to use default
+     * @param vertDirAngle changes vertical size of the cave, values < 1 result in flattened caves, > 1 result in
+     * vertically stretched caves
+     */
+    private void generateNode(ChunkPrimeWriter cube, long seed,
+                              CubicPos generatedCubicPos,
+                              double caveX, double caveY, double caveZ,
+                              float baseCaveSize, float horizDirAngle, float vertDirAngle,
+                              int startWalkedDistance, int maxWalkedDistance, double vertCaveSizeMod) {
+        Random rand = new Random(seed);
 
-        float deltaHorizontalAngle = 0.0F;
-        float deltaVerticalAngle = 0.0F;
-        Random random = new Random(seed);
+        //store by how much the horizontal and vertical direction angles will change each step
+        float horizDirChange = 0.0F;
+        float vertDirChange = 0.0F;
 
-        if (stepCount <= 0) {
-            int i = (this.range - 1) << 4;
-            stepCount = i - random.nextInt(i / 4);
+        if (maxWalkedDistance <= 0) {
+            int maxBlockRadius = cubeToMinBlock(RANGE - 1);
+            maxWalkedDistance = maxBlockRadius - rand.nextInt(maxBlockRadius / 4);
         }
 
-        boolean lastStep = false;
-        if (currentStep == -1) {
-            currentStep = stepCount / 2;
-            lastStep = true;
+        //if true - this branch won't generate new sub-branches
+        boolean finalStep = false;
+
+        int walkedDistance;
+        if (startWalkedDistance == -1) {
+            //generate a cave "room"
+            //start at half distance towards the end = max cave size
+            walkedDistance = maxWalkedDistance / 2;
+            finalStep = true;
+        } else {
+            walkedDistance = startWalkedDistance;
         }
 
-        boolean steepStep = random.nextInt(6) == 0;
-        int splitStep = random.nextInt(stepCount / 2) + stepCount / 4;
+        int splitPoint = rand.nextInt(maxWalkedDistance / 2) + maxWalkedDistance / 4;
 
-        while (currentStep < stepCount) {
-            double radiusHorizontal = 1.5 + MathHelper.sin((float) (currentStep * Math.PI / stepCount)) * radius;
-            double radiusVertical = radiusHorizontal * flatnessFactor;
+        for (; walkedDistance < maxWalkedDistance; ++walkedDistance) {
+            float fractionWalked = walkedDistance / (float) maxWalkedDistance;
+            //horizontal and vertical size of the cave
+            //size starts small and increases, then decreases as cave goes further
+            double caveSizeHoriz = CAVE_SIZE_ADD + sin(fractionWalked * (float) Math.PI) * baseCaveSize;
+            double caveSizeVert = caveSizeHoriz * vertCaveSizeMod;
 
-            float displacementHorizontalFactor = MathHelper.cos(verticalAngle);
-            float displacementVerticalFactor = MathHelper.sin(verticalAngle);
+            //Walk forward a single step:
 
-            nodeOriginX += MathHelper.cos(horizontalAngle) * displacementHorizontalFactor;
-            nodeOriginY += displacementVerticalFactor;
-            nodeOriginZ += MathHelper.sin(horizontalAngle) * displacementHorizontalFactor;
+            //from sin(alpha)=y/r and cos(alpha)=x/r ==> x = r*cos(alpha) and y = r*sin(alpha)
+            //always moves by one block in some direction
 
-            if (steepStep) {
-                verticalAngle = verticalAngle * 0.92F;
+            //here x is xzDirectionFactor, y is yDirectionFactor
+            float xzDirectionFactor = cos(vertDirAngle);
+            float yDirectionFactor = sin(vertDirAngle);
+
+            //here y is directionZ and x is directionX
+            caveX += cos(horizDirAngle) * xzDirectionFactor;
+            caveY += yDirectionFactor;
+            caveZ += sin(horizDirAngle) * xzDirectionFactor;
+
+            if (rand.nextInt(STEEP_STEP_RARITY) == 0) {
+                vertDirAngle *= STEEPER_FLATTEN_FACTOR;
             } else {
-                verticalAngle = verticalAngle * 0.7F;
+                vertDirAngle *= FLATTEN_FACTOR;
             }
 
-            verticalAngle = verticalAngle + deltaVerticalAngle * 0.1F;
-            horizontalAngle += deltaHorizontalAngle * 0.1F;
+            //change the direction
+            vertDirAngle += vertDirChange * DIRECTION_CHANGE_FACTOR;
+            horizDirAngle += horizDirChange * DIRECTION_CHANGE_FACTOR;
+            //update direction change angles
+            vertDirChange *= PREV_VERT_DIRECTION_CHANGE_WEIGHT;
+            horizDirChange *= PREV_HORIZ_DIRECTION_CHANGE_WEIGHT;
+            vertDirChange += (rand.nextFloat() - rand.nextFloat()) * rand.nextFloat() * MAX_ADD_DIRECTION_CHANGE_VERT;
+            horizDirChange += (rand.nextFloat() - rand.nextFloat()) * rand.nextFloat() * MAX_ADD_DIRECTION_CHANGE_HORIZ;
 
-            deltaVerticalAngle = deltaVerticalAngle * 0.9F;
-            deltaHorizontalAngle = deltaHorizontalAngle * 0.75F;
-            deltaVerticalAngle = deltaVerticalAngle + (random.nextFloat() - random.nextFloat()) * random.nextFloat() * 2.0F;
-            deltaHorizontalAngle = deltaHorizontalAngle + (random.nextFloat() - random.nextFloat()) * random.nextFloat() * 4.0F;
-
-            if (!lastStep && currentStep == splitStep && radius > 1.0F && stepCount > 0) {
-                this.addTunnel(random.nextLong(), generatedCubePos, writer, nodeOriginX, nodeOriginY, nodeOriginZ, random.nextFloat() * 0.5F + 0.5F, horizontalAngle - (float) (Math.PI / 2.0F), verticalAngle / 3.0F, currentStep, stepCount, 1.0);
-                this.addTunnel(random.nextLong(), generatedCubePos, writer, nodeOriginX, nodeOriginY, nodeOriginZ, random.nextFloat() * 0.5F + 0.5F, horizontalAngle + (float) (Math.PI / 2.0F), verticalAngle / 3.0F, currentStep, stepCount, 1.0);
+            //if we reached split point - try to split
+            //can split only if it's not final branch and the cave is still big enough (>1 block radius)
+            if (!finalStep && walkedDistance == splitPoint && baseCaveSize > 1.0F) {
+                this.generateNode(cube, rand.nextLong(),
+                        generatedCubicPos, caveX, caveY, caveZ,
+                        rand.nextFloat() * 0.5F + 0.5F,//base cave size
+                        horizDirAngle - ((float) Math.PI / 2F),//horiz. angle - subtract 90 degrees
+                        vertDirAngle / 3.0F, walkedDistance, maxWalkedDistance,
+                        1.0D);
+                this.generateNode(cube, rand.nextLong(), generatedCubicPos, caveX, caveY, caveZ,
+                        rand.nextFloat() * 0.5F + 0.5F,//base cave size
+                        horizDirAngle + ((float) Math.PI / 2F),//horiz. angle - add 90 degrees
+                        vertDirAngle / 3.0F, walkedDistance, maxWalkedDistance,
+                        1.0D);
                 return;
             }
 
-            if (lastStep || random.nextInt(4) != 0) {
-                double deltaX = nodeOriginX - centerCubeX;
-                double deltaY = nodeOriginY - centerCubeY;
-                double deltaZ = nodeOriginZ - centerCubeZ;
-                double stepDistReduction = stepCount - currentStep;
-                double maxDistance = radius + 2.0F + 16.0F;
-
-                double distanceSq = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ - stepDistReduction * stepDistReduction;
-                if (distanceSq > maxDistance * maxDistance) {
-                    return;
-                }
-
-                if (nodeOriginX >= centerCubeX - 16.0 - radiusHorizontal * 2.0
-                        && nodeOriginY >= centerCubeY - 16.0 - radiusVertical * 2.0
-                        && nodeOriginZ >= centerCubeZ - 16.0 - radiusHorizontal * 2.0
-                        && nodeOriginX <= centerCubeX + 16.0 + radiusHorizontal * 2.0
-                        && nodeOriginY <= centerCubeY + 16.0 + radiusVertical * 2.0
-                        && nodeOriginZ <= centerCubeZ + 16.0 + radiusHorizontal * 2.0
-                ) {
-                    int minX = MathHelper.floor(nodeOriginX - radiusHorizontal) - generatedCubePos.getMinX() - 1;
-                    int maxX = MathHelper.floor(nodeOriginX + radiusHorizontal) - generatedCubePos.getMinX() + 1;
-                    int minY = MathHelper.floor(nodeOriginY - radiusVertical) - generatedCubePos.getMinY() - 1;
-                    int maxY = MathHelper.floor(nodeOriginY + radiusVertical) + generatedCubePos.getMinY() + 1;
-                    int minZ = MathHelper.floor(nodeOriginZ - radiusHorizontal) - generatedCubePos.getMinZ() - 1;
-                    int maxZ = MathHelper.floor(nodeOriginZ + radiusHorizontal) - generatedCubePos.getMinZ() + 1;
-
-                    if (minX < 0) minX = 0;
-                    if (maxX > 16) maxX = 16;
-                    if (minY < 0) minY = 0;
-                    if (maxY > 16) maxY = 16;
-                    if (minZ < 0) minZ = 0;
-                    if (maxZ > 16) maxZ = 16;
-
-                    if (!this.checkOceanic(writer, minX, maxX, minY, maxY, minZ, maxZ)) {
-                        this.carveStep(generatedCubePos, writer, nodeOriginX, nodeOriginY, nodeOriginZ, radiusHorizontal, radiusVertical, minX, maxX, minY, maxY, minZ, maxZ);
-                        if (lastStep) break;
-                    }
-                }
+            //carve blocks only on some percentage of steps, unless this is the final branch
+            if (rand.nextInt(CARVE_STEP_RARITY) == 0 && !finalStep) {
+                continue;
             }
 
-            currentStep++;
+            double xDist = caveX - generatedCubicPos.getCenterX();
+            double yDist = caveY - generatedCubicPos.getCenterY();
+            double zDist = caveZ - generatedCubicPos.getCenterZ();
+            double maxStepsDist = maxWalkedDistance - walkedDistance;
+            //CHANGE: multiply max(1, vertCaveSizeMod)
+            double maxDistToCube = baseCaveSize * max(1, vertCaveSizeMod) + CAVE_SIZE_ADD + 16;
+
+            //can this cube be reached at all?
+            //if even after going max distance allowed by remaining steps, it's still too far - stop
+            //TODO: does it make any performance difference?
+            if (xDist * xDist + yDist * yDist + zDist * zDist - maxStepsDist * maxStepsDist > maxDistToCube * maxDistToCube) {
+                return;
+            }
+
+            tryCarveBlocks(cube, generatedCubicPos,
+                    caveX, caveY, caveZ,
+                    caveSizeHoriz, caveSizeVert);
+            if (finalStep) {
+                return;
+            }
         }
     }
 
-    private void carveStep(CubicPos generatedCubePos, ChunkPrimeWriter writer, double nodeOriginX, double nodeOriginY, double nodeOriginZ, double radiusHorizontal, double radiusVertical, int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
-        for (int x = minX; x < maxX; x++) {
-            double deltaX = ((x + generatedCubePos.getMinX()) + 0.5 - nodeOriginX) / radiusHorizontal;
+    //returns true if cave generation should be continued
+    private void tryCarveBlocks(@Nonnull ChunkPrimeWriter cube, @Nonnull CubicPos generatedCubicPos,
+                                double caveX, double caveY, double caveZ,
+                                double caveSizeHoriz, double caveSizeVert) {
+        double genCubeCenterX = generatedCubicPos.getCenterX();
+        double genCubeCenterY = generatedCubicPos.getCenterY();
+        double genCubeCenterZ = generatedCubicPos.getCenterZ();
 
-            for (int z = minZ; z < maxZ; z++) {
-                double deltaZ = ((z + generatedCubePos.getMinZ()) + 0.5 - nodeOriginZ) / radiusHorizontal;
-                boolean brokeSurface = false;
+        //Can current step position affect currently modified cube?
+        //TODO: is multiply by 2 needed?
+        if (caveX < genCubeCenterX - 16 - caveSizeHoriz * 2.0D ||
+                caveY < genCubeCenterY - 16 - caveSizeVert * 2.0D ||
+                caveZ < genCubeCenterZ - 16 - caveSizeHoriz * 2.0D ||
+                caveX > genCubeCenterX + 16 + caveSizeHoriz * 2.0D ||
+                caveY > genCubeCenterY + 16 + caveSizeVert * 2.0D ||
+                caveZ > genCubeCenterZ + 16 + caveSizeHoriz * 2.0D) {
+            return;
+        }
+        int minLocalX = floor(caveX - caveSizeHoriz) - generatedCubicPos.getMinX() - 1;
+        int maxLocalX = floor(caveX + caveSizeHoriz) - generatedCubicPos.getMinX() + 1;
+        int minLocalY = floor(caveY - caveSizeVert) - generatedCubicPos.getMinY() - 1;
+        int maxLocalY = floor(caveY + caveSizeVert) - generatedCubicPos.getMinY() + 1;
+        int minLocalZ = floor(caveZ - caveSizeHoriz) - generatedCubicPos.getMinZ() - 1;
+        int maxLocalZ = floor(caveZ + caveSizeHoriz) - generatedCubicPos.getMinZ() + 1;
 
-                if (deltaX * deltaX + deltaZ * deltaZ < 1.0) {
-                    for (int y = maxY; y > minY; y--) {
-                        double deltaY = ((y - 1) + 0.5 - nodeOriginY) / radiusVertical;
+        //skip is if everything is outside of that cube
+        if (maxLocalX <= 0 || minLocalX >= 16 ||
+                maxLocalY <= 0 || minLocalY >= 16 ||
+                maxLocalZ <= 0 || minLocalZ >= 16) {
+            return;
+        }
+        StructureBoundingBox boundingBox = new StructureBoundingBox(minLocalX, minLocalY, minLocalZ, maxLocalX, maxLocalY, maxLocalZ);
 
-                        if (deltaY > -0.7 && deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ < 1.0) {
-                            IBlockState state = writer.get(x, y, z);
-                            IBlockState aboveState = MoreObjects.firstNonNull(writer.get(x, y + 1, z), AIR);
+        CubicStructurePrimeUtil.clampBoundingBoxToLocalCube(boundingBox);
 
-                            BlockPos pos = new BlockPos(x + generatedCubePos.getMinX(), generatedCubePos.getMinY() + y, z + generatedCubePos.getMinZ());
-                            Biome biome = this.world.getBiome(pos);
-                            if (this.isTopBlock(writer, x, y, z, biome)) {
-                                brokeSurface = true;
-                            }
+        boolean hitLiquid = CubicStructurePrimeUtil.scanWallsForBlock(cube, boundingBox,
+                (b) -> b.getBlock() == Blocks.LAVA || b.getBlock() == Blocks.FLOWING_LAVA);
 
-                            this.digBlock(writer, x, y, z, biome, brokeSurface, state, aboveState);
+        if (!hitLiquid) {
+            carveBlocks(cube, generatedCubicPos, caveX, caveY, caveZ, caveSizeHoriz, caveSizeVert, boundingBox);
+        }
+    }
+
+    private void carveBlocks(ChunkPrimeWriter cube,
+                             CubicPos generatedCubicPos,
+                             double caveX, double caveY, double caveZ,
+                             double caveSizeHoriz, double caveSizeVert,
+                             StructureBoundingBox boundingBox) {
+
+        int generatedCubeX = generatedCubicPos.getX();
+        int generatedCubeY = generatedCubicPos.getY();
+        int generatedCubeZ = generatedCubicPos.getZ();
+
+        int minX = boundingBox.minX;
+        int maxX = boundingBox.maxX;
+        int minY = boundingBox.minY;
+        int maxY = boundingBox.maxY;
+        int minZ = boundingBox.minZ;
+        int maxZ = boundingBox.maxZ;
+
+        for (int localX = minX; localX < maxX; ++localX) {
+            double distX = normalizedDistance(generatedCubeX, localX, caveX, caveSizeHoriz);
+
+            for (int localZ = minZ; localZ < maxZ; ++localZ) {
+                double distZ = normalizedDistance(generatedCubeZ, localZ, caveZ, caveSizeHoriz);
+
+                if (distX * distX + distZ * distZ >= 1.0D) {
+                    continue;
+                }
+                for (int localY = minY; localY < maxY; ++localY) {
+                    double distY = normalizedDistance(generatedCubeY, localY, caveY, caveSizeVert);
+
+                    IBlockState state = cube.get(localX, localY, localZ);
+
+                    if (!isBlockReplaceable.test(state)) {
+                        continue;
+                    }
+
+                    if (shouldCarveBlock(distX, distY, distZ)) {
+                        // No lava generation, infinite depth. Lava will be generated differently (or not generated)
+                        cube.set(localX, localY, localZ, Blocks.AIR.getDefaultState());
+                    } else if (state.getBlock() == Blocks.DIRT) {
+                        //vanilla dirt-grass replacement works by scanning top-down and moving the block
+                        //cubic chunks needs to be a bit more hacky about it
+                        //instead of keeping track of the encountered grass block
+                        //cubic chunks replaces any dirt block (it's before population, no ore-like dirt formations yet)
+                        //with grass, if the block above would be deleted by this cave generator step
+                        double distYAbove = normalizedDistance(generatedCubeY, localY + 1, caveY, caveSizeVert);
+                        if (shouldCarveBlock(distX, distYAbove, distZ)) {
+                            cube.set(localX, localY, localZ, Blocks.GRASS.getDefaultState());
                         }
                     }
                 }
@@ -192,56 +439,8 @@ public class GenericCavePrimer extends GenericStructurePrimer {
         }
     }
 
-    private boolean checkOceanic(ChunkPrimeWriter writer, int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
-        for (int x = minX; x < maxX; ++x) {
-            for (int z = minZ; z < maxZ; ++z) {
-                for (int y = maxY; y >= minY; y--) {
-                    if (this.isOceanBlock(writer, x, y, z)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean canReplaceBlock(IBlockState state, IBlockState up) {
-        Block block = state.getBlock();
-        return block == Blocks.STONE
-                || block == Blocks.DIRT
-                || block == Blocks.GRASS
-                || block == Blocks.HARDENED_CLAY
-                || block == Blocks.STAINED_HARDENED_CLAY
-                || block == Blocks.SANDSTONE
-                || block == Blocks.RED_SANDSTONE
-                || block == Blocks.MYCELIUM
-                || block == Blocks.SNOW_LAYER
-                || (block == Blocks.SAND || block == Blocks.GRAVEL) && up.getMaterial() != Material.WATER;
-    }
-
-    private boolean isOceanBlock(ChunkPrimeWriter writer, int x, int y, int z) {
-        Block block = writer.get(x, y, z).getBlock();
-        return block == Blocks.FLOWING_WATER || block == Blocks.WATER;
-    }
-
-    private boolean isTopBlock(ChunkPrimeWriter writer, int x, int y, int z, Biome biome) {
-        IBlockState state = writer.get(x, y, z);
-        return (this.isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS : state.getBlock() == biome.topBlock);
-    }
-
-    private boolean isExceptionBiome(Biome biome) {
-        return biome == Biomes.BEACH || biome == Biomes.DESERT;
-    }
-
-    private void digBlock(ChunkPrimeWriter writer, int x, int y, int z, Biome biome, boolean brokeSurface, IBlockState state, IBlockState up) {
-        IBlockState top = biome.topBlock;
-        IBlockState filler = biome.fillerBlock;
-
-        if (this.canReplaceBlock(state, up) || state.getBlock() == top.getBlock() || state.getBlock() == filler.getBlock()) {
-            writer.set(x, y, z, AIR);
-            if (brokeSurface && writer.get(x, y - 1, z).getBlock() == filler.getBlock()) {
-                writer.set(x, y - 1, z, top.getBlock().getDefaultState());
-            }
-        }
+    private static boolean shouldCarveBlock(double distX, double distY, double distZ) {
+        //distY > CAVE_FLOOR_DEPTH --> flattened floor
+        return distY > CAVE_FLOOR_DEPTH && distX * distX + distY * distY + distZ * distZ < 1.0D;
     }
 }
