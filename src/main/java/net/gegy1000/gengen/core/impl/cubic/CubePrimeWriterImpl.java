@@ -2,7 +2,7 @@ package net.gegy1000.gengen.core.impl.cubic;
 
 import io.github.opencubicchunks.cubicchunks.api.worldgen.CubePrimer;
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.ChunkPrimeWriter;
+import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
 import net.minecraft.block.state.IBlockState;
 
 import javax.annotation.ParametersAreNonnullByDefault;

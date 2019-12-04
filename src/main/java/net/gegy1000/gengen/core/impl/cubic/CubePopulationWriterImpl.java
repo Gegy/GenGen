@@ -1,15 +1,15 @@
 package net.gegy1000.gengen.core.impl.cubic;
 
-import io.github.opencubicchunks.cubicchunks.api.world.ICubicWorld;
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.ChunkPopulationWriter;
 import net.gegy1000.gengen.api.CubicPos;
+import net.gegy1000.gengen.api.writer.ChunkPopulationWriter;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.Chunk;
 
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @MethodsReturnNonnullByDefault
@@ -33,14 +33,22 @@ public class CubePopulationWriterImpl implements ChunkPopulationWriter {
         return this.world.getBlockState(pos);
     }
 
-    @Nullable
     @Override
-    public BlockPos getSurface(BlockPos pos) {
-        int minFreeY = this.pos.getCenterY();
-        int maxFreeY = minFreeY + 16;
+    public boolean getSurfaceMut(BlockPos.MutableBlockPos pos) {
+        Chunk chunk = this.world.getChunk(pos);
 
-        BlockPos start = new BlockPos(pos.getX(), this.pos.getMaxY() + 16, pos.getZ());
-        return ((ICubicWorld) this.world).findTopBlock(start, minFreeY, maxFreeY, ICubicWorld.SurfaceType.SOLID);
+        int minY = this.pos.getCenterY();
+        pos.setY(minY + 16);
+
+        while (pos.getY() >= minY) {
+            pos.move(EnumFacing.DOWN);
+            if (chunk.getBlockState(pos).getLightOpacity(this.world, pos) != 0) {
+                pos.move(EnumFacing.UP);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override

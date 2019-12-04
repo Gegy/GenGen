@@ -1,7 +1,6 @@
 package net.gegy1000.gengen.core;
 
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.GenericEventDispatcher;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
@@ -42,10 +41,6 @@ public class GenGen {
 
     public static GenGenWorldProxy proxy(World world) {
         return WORLD_PROXY.computeIfAbsent(world, w -> isCubic(w) ? new GenGenWorldProxy.Cubic() : new GenGenWorldProxy.Vanilla());
-    }
-
-    public static GenericEventDispatcher events(World world) {
-        return proxy(world).getEventDispatcher();
     }
 
     public static boolean isCubic(World world) {

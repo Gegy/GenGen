@@ -1,20 +1,22 @@
-package net.gegy1000.gengen.api;
+package net.gegy1000.gengen.api.generator;
 
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import mcp.MethodsReturnNonnullByDefault;
+import net.gegy1000.gengen.api.CubicPos;
 import net.gegy1000.gengen.core.GenGen;
 import net.gegy1000.gengen.core.impl.cubic.CubeGeneratorImpl;
 import net.gegy1000.gengen.core.impl.vanilla.ColumnGeneratorImpl;
 import net.gegy1000.gengen.core.support.SpongeSupport;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.IChunkGenerator;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.Collections;
 import java.util.List;
 
 @ParametersAreNonnullByDefault
@@ -42,14 +44,22 @@ public interface GenericChunkGenerator extends GenericChunkPrimer, GenericChunkP
         return null;
     }
 
-    Biome[] populateBiomes(ChunkPos pos, Biome[] buffer);
+    default void generateColumn(Chunk column) {
+    }
 
-    List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType type, BlockPos pos);
+    default List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType type, BlockPos pos) {
+        return Collections.emptyList();
+    }
 
-    void recreateStructures(CubicPos pos);
+    default void prepareStructures(CubicPos pos) {
+    }
 
     @Nullable
-    BlockPos getClosestStructure(String name, BlockPos pos, boolean findUnexplored);
+    default BlockPos getClosestStructure(String name, BlockPos pos, boolean findUnexplored) {
+        return null;
+    }
 
-    boolean isInsideStructure(String name, BlockPos pos);
+    default boolean isInsideStructure(String name, BlockPos pos) {
+        return false;
+    }
 }

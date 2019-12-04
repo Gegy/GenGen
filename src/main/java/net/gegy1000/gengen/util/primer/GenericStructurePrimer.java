@@ -24,8 +24,8 @@
 package net.gegy1000.gengen.util.primer;
 
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.ChunkPrimeWriter;
-import net.gegy1000.gengen.api.GenericChunkPrimer;
+import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
+import net.gegy1000.gengen.api.generator.GenericChunkPrimer;
 import net.gegy1000.gengen.api.CubicPos;
 import net.minecraft.world.World;
 
@@ -67,7 +67,7 @@ public abstract class GenericStructurePrimer implements GenericChunkPrimer {
     }
 
     @Override
-    public void prime(CubicPos pos, ChunkPrimeWriter writer) {
+    public void primeChunk(CubicPos pos, ChunkPrimeWriter writer) {
 
         this.rand.setSeed(world.getSeed());
         //used to randomize contribution of each coordinate to the cube seed

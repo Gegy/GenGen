@@ -1,6 +1,7 @@
 package net.gegy1000.gengen.api;
 
 import mcp.MethodsReturnNonnullByDefault;
+import net.gegy1000.gengen.api.generator.GenericChunkGenerator;
 import net.gegy1000.gengen.core.GenGen;
 import net.gegy1000.gengen.core.impl.vanilla.ColumnWorldTypeImpl;
 import net.minecraft.client.Minecraft;
@@ -24,6 +25,15 @@ public interface GenericWorldType {
     static GenericWorldType unwrap(WorldType worldType) {
         if (worldType instanceof ColumnWorldTypeImpl) {
             return ((ColumnWorldTypeImpl) worldType).getInner();
+        }
+        return null;
+    }
+
+    @Nullable
+    static <T extends GenericWorldType> T unwrapAs(WorldType worldType, Class<T> type) {
+        GenericWorldType genericType = unwrap(worldType);
+        if (type.isInstance(genericType)) {
+            return type.cast(genericType);
         }
         return null;
     }

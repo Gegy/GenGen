@@ -2,7 +2,7 @@ package net.gegy1000.gengen.core.impl.vanilla;
 
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.gengen.core.GenGen;
-import net.gegy1000.gengen.api.GenericChunkGenerator;
+import net.gegy1000.gengen.api.generator.GenericChunkGenerator;
 import net.gegy1000.gengen.api.GenericWorldType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiCreateWorld;

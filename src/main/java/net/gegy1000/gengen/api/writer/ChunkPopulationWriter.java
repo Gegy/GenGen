@@ -1,4 +1,4 @@
-package net.gegy1000.gengen.api;
+package net.gegy1000.gengen.api.writer;
 
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.state.IBlockState;
@@ -19,7 +19,13 @@ public interface ChunkPopulationWriter {
     IBlockState get(BlockPos pos);
 
     @Nullable
-    BlockPos getSurface(BlockPos pos);
+    default BlockPos getSurface(BlockPos pos) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(pos);
+        if (!this.getSurfaceMut(mutablePos)) return null;
+        return mutablePos;
+    }
+
+    boolean getSurfaceMut(BlockPos.MutableBlockPos pos);
 
     Biome getCenterBiome();
 

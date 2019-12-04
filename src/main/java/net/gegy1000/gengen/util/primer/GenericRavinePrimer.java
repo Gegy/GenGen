@@ -24,7 +24,8 @@
 package net.gegy1000.gengen.util.primer;
 
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.ChunkPrimeWriter;
+import net.gegy1000.gengen.api.HeightFunction;
+import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
 import net.gegy1000.gengen.api.CubicPos;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -123,7 +124,7 @@ public class GenericRavinePrimer extends GenericStructurePrimer {
     @Nonnull private static final Predicate<IBlockState> isBlockReplaceable = (state ->
             state.getBlock() == Blocks.STONE || state.getBlock() == Blocks.DIRT || state.getBlock() == Blocks.GRASS);
 
-    private final int maxCubeY;
+    private final HeightFunction surfaceFunction;
 
     /**
      * Contains values of ravine widths at each height.
@@ -132,19 +133,20 @@ public class GenericRavinePrimer extends GenericStructurePrimer {
      */
     @Nonnull private float[] widthDecreaseFactors = new float[1024];
 
-    /**
-     * @param maxY the highest point at which ravines should generate
-     */
-    public GenericRavinePrimer(World world, int maxY) {
+    public GenericRavinePrimer(World world, HeightFunction surfaceFunction) {
         super(world, 2);
-        this.maxCubeY = maxY >> 4;
+        this.surfaceFunction = surfaceFunction;
     }
 
     @Override
     protected void generate(ChunkPrimeWriter writer, int structureX, int structureY, int structureZ, CubicPos generatedCubePos) {
-        if (rand.nextInt(RAVINE_RARITY) != 0 || structureY > maxCubeY) {
+        int surfaceY = this.surfaceFunction.apply((structureX << 4) + 8, (structureZ << 4) + 8);
+        int surfaceCubeY = surfaceY >> 4;
+
+        if (rand.nextInt(RAVINE_RARITY) != 0 || structureY > surfaceCubeY) {
             return;
         }
+
         double startX = (structureX << 4) + rand.nextInt(16);
         double startY = (structureY << 4) + rand.nextInt(16);
         double startZ = (structureZ << 4) + rand.nextInt(16);

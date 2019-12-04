@@ -2,7 +2,7 @@ package net.gegy1000.gengen.util.wrapper;
 
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.gengen.api.CubicPos;
-import net.gegy1000.gengen.api.GenericChunkGenerator;
+import net.gegy1000.gengen.api.generator.GenericChunkGenerator;
 import net.gegy1000.gengen.core.impl.vanilla.ColumnPrimeWriterImpl;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
@@ -32,7 +32,7 @@ public class OverworldGeneratorWrapper extends ChunkGeneratorOverworld {
     public void setBlocksInChunk(int x, int z, ChunkPrimer primer) {
         for (int y = 0; y < 16; y++) {
             CubicPos pos = new CubicPos(x, y, z);
-            this.generator.prime(pos, new ColumnPrimeWriterImpl(primer, pos));
+            this.generator.primeChunk(pos, new ColumnPrimeWriterImpl(primer, pos));
         }
     }
 }

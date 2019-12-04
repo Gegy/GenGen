@@ -5,7 +5,7 @@ import io.github.opencubicchunks.cubicchunks.api.world.ICubicWorldType;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.gengen.core.impl.vanilla.ColumnWorldTypeImpl;
-import net.gegy1000.gengen.api.GenericChunkGenerator;
+import net.gegy1000.gengen.api.generator.GenericChunkGenerator;
 import net.gegy1000.gengen.api.GenericWorldType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;

@@ -2,60 +2,59 @@ package net.gegy1000.gengen.util;
 
 import net.minecraft.world.World;
 
-public class SpatialRandom {
-    private static final long PRIME_1 = 6364136223846793005L;
-    private static final long PRIME_2 = 1442695040888963407L;
+import java.util.Random;
 
-    private final long seed;
+public class SpatialRandom extends Random {
+    private static final long MASK = (1L << 48) - 1;
 
-    private long currentSeed;
+    private static final long PRIME_1 = 6364136223846793005L & MASK;
+    private static final long PRIME_2 = 1442695040888963407L & MASK;
+
+    private final long baseSeed;
+    private long seed;
 
     public SpatialRandom(long worldSeed, long localSeed) {
-        this.seed = worldSeed ^ localSeed;
+        super(0);
+        this.baseSeed = (worldSeed ^ localSeed) & MASK;
+        this.seed = this.baseSeed;
     }
 
     public SpatialRandom(World world, long localSeed) {
         this(world.getWorldInfo().getSeed(), localSeed);
     }
 
-    public void initPosSeed(int x, int z) {
-        this.currentSeed = this.seed;
+    public void setSeed(int x, int z) {
+        long seed = this.baseSeed;
         for (int i = 0; i < 2; i++) {
-            this.currentSeed *= this.currentSeed * PRIME_1 + PRIME_2;
-            this.currentSeed += x;
-            this.currentSeed *= this.currentSeed * PRIME_1 + PRIME_2;
-            this.currentSeed += z;
+            seed *= seed * PRIME_1 + PRIME_2;
+            seed += x;
+            seed *= seed * PRIME_1 + PRIME_2;
+            seed += z;
         }
+        this.seed = seed & MASK;
     }
 
-    public void initPosSeed(int x, int y, int z) {
-        this.currentSeed = this.seed;
+    public void setSeed(int x, int y, int z) {
+        long seed = this.baseSeed;
         for (int i = 0; i < 2; i++) {
-            this.currentSeed *= this.currentSeed * PRIME_1 + PRIME_2;
-            this.currentSeed += x;
-            this.currentSeed *= this.currentSeed * PRIME_1 + PRIME_2;
-            this.currentSeed += z;
-            this.currentSeed *= this.currentSeed * PRIME_1 + PRIME_2;
-            this.currentSeed += y;
+            seed *= seed * PRIME_1 + PRIME_2;
+            seed += x;
+            seed *= seed * PRIME_1 + PRIME_2;
+            seed += z;
+            seed *= seed * PRIME_1 + PRIME_2;
+            seed += y;
         }
+        this.seed = seed & MASK;
     }
 
-    public int nextInt(int bound) {
-        long next = (this.next() >> 24) % bound;
-        if (next < 0) {
-            next += bound;
-        }
-        return (int) next;
+    @Override
+    public void setSeed(long seed) {
+        this.seed = seed & MASK;
     }
 
-    public double nextDouble() {
-        return (double) this.nextInt(0xFFFFFF) / 0xFFFFFF;
-    }
-
-    public long next() {
-        long next = this.currentSeed;
-        this.currentSeed *= this.currentSeed * PRIME_1 + PRIME_2;
-        this.currentSeed += this.seed;
-        return next;
+    @Override
+    protected int next(int bits) {
+        this.seed = (this.seed * PRIME_1 + PRIME_2) & MASK;
+        return (int) (this.seed >>> (48 - bits));
     }
 }

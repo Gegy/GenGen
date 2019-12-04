@@ -1,15 +1,15 @@
 package net.gegy1000.gengen.core.impl.vanilla;
 
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.ChunkPopulationWriter;
 import net.gegy1000.gengen.api.CubicPos;
+import net.gegy1000.gengen.api.writer.ChunkPopulationWriter;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @MethodsReturnNonnullByDefault
@@ -33,28 +33,22 @@ public class ColumnPopulationWriterImpl implements ChunkPopulationWriter {
         return this.world.getBlockState(pos);
     }
 
-    @Nullable
     @Override
-    public BlockPos getSurface(BlockPos pos) {
+    public boolean getSurfaceMut(BlockPos.MutableBlockPos pos) {
         Chunk chunk = this.world.getChunk(pos);
 
         int minY = this.pos.getCenterY();
+        pos.setY(minY + 16);
 
-        BlockPos surfacePos = new BlockPos(pos.getX(), minY + 16, pos.getZ());
-        BlockPos nextPos;
-
-        while (surfacePos.getY() >= minY) {
-            nextPos = surfacePos.down();
-            IBlockState state = chunk.getBlockState(nextPos);
-
-            if (state.getLightOpacity(this.world, nextPos) != 0) {
-                return surfacePos;
+        while (pos.getY() >= minY) {
+            pos.move(EnumFacing.DOWN);
+            if (chunk.getBlockState(pos).getLightOpacity(this.world, pos) != 0) {
+                pos.move(EnumFacing.UP);
+                return true;
             }
-
-            surfacePos = nextPos;
         }
 
-        return null;
+        return false;
     }
 
     @Override

@@ -87,9 +87,7 @@ public final class CubicPos {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
+        if (this == o) return true;
         if (o instanceof CubicPos) {
             CubicPos pos = (CubicPos) o;
             return this.x == pos.x && this.y == pos.y && this.z == pos.z;
@@ -99,9 +97,6 @@ public final class CubicPos {
 
     @Override
     public int hashCode() {
-        int result = this.x;
-        result = 31 * result + this.y;
-        result = 31 * result + this.z;
-        return result;
+        return 31 * (31 * this.x + this.y) + this.z;
     }
 }

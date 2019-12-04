@@ -7,11 +7,9 @@ import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import io.github.opencubicchunks.cubicchunks.core.world.cube.Cube;
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.gengen.api.CubicPos;
-import net.gegy1000.gengen.api.GenericChunkGenerator;
-import net.gegy1000.gengen.core.GenGen;
+import net.gegy1000.gengen.api.generator.GenericChunkGenerator;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
@@ -38,18 +36,20 @@ public class CubeGeneratorImpl implements ICubeGenerator {
         CubePrimer primer = new CubePrimer();
 
         CubicPos pos = new CubicPos(x, y, z);
-        this.generator.prime(pos, new CubePrimeWriterImpl(primer));
+        this.generator.primeChunk(pos, new CubePrimeWriterImpl(primer));
 
         return primer;
     }
 
     @Override
-    public void generateColumn(Chunk chunk) {
-        this.biomeBuffer = this.generator.populateBiomes(new ChunkPos(chunk.x, chunk.z), this.biomeBuffer);
-        byte[] biomeArray = chunk.getBiomeArray();
+    public void generateColumn(Chunk column) {
+        this.biomeBuffer = this.world.getBiomeProvider().getBiomes(this.biomeBuffer, column.x << 4, column.z << 4, 16, 16);
+        byte[] biomeArray = column.getBiomeArray();
         for (int i = 0; i < this.biomeBuffer.length; i++) {
             biomeArray[i] = (byte) Biome.getIdForBiome(this.biomeBuffer[i]);
         }
+
+        this.generator.generateColumn(column);
     }
 
     @Override
@@ -59,9 +59,7 @@ public class CubeGeneratorImpl implements ICubeGenerator {
         }
 
         CubicPos pos = new CubicPos(cube.getX(), cube.getY(), cube.getZ());
-        GenGen.events(this.world).populate(this.world, pos, () -> {
-            this.generator.populate(pos, new CubePopulationWriterImpl(this.world, pos));
-        });
+        this.generator.populateChunk(pos, new CubePopulationWriterImpl(this.world, pos));
     }
 
     @Override
@@ -81,7 +79,7 @@ public class CubeGeneratorImpl implements ICubeGenerator {
 
     @Override
     public void recreateStructures(ICube cube) {
-        this.generator.recreateStructures(new CubicPos(cube.getX(), cube.getY(), cube.getZ()));
+        this.generator.prepareStructures(new CubicPos(cube.getX(), cube.getY(), cube.getZ()));
     }
 
     @Override

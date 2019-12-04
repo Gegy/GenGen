@@ -24,7 +24,7 @@
 package net.gegy1000.gengen.util.primer;
 
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.ChunkPrimeWriter;
+import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 

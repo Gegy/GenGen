@@ -1,32 +1,9 @@
-/*
- *  This file is part of Cubic World Generation, licensed under the MIT License (MIT).
- *
- *  Copyright (c) 2015 contributors
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to deal
- *  in the Software without restriction, including without limitation the rights
- *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *  copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
- *
- *  The above copyright notice and this permission notice shall be included in
- *  all copies or substantial portions of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- *  THE SOFTWARE.
- */
 package net.gegy1000.gengen.util.primer;
 
 import com.google.common.base.MoreObjects;
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.ChunkPrimeWriter;
 import net.gegy1000.gengen.api.CubicPos;
+import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -110,7 +87,7 @@ public class GenericCavePrimer extends GenericStructurePrimer {
         boolean steepStep = random.nextInt(6) == 0;
         int splitStep = random.nextInt(stepCount / 2) + stepCount / 4;
 
-        for (; currentStep < stepCount; currentStep++) {
+        while (currentStep < stepCount) {
             double radiusHorizontal = 1.5 + MathHelper.sin((float) (currentStep * Math.PI / stepCount)) * radius;
             double radiusVertical = radiusHorizontal * flatnessFactor;
 
@@ -167,35 +144,21 @@ public class GenericCavePrimer extends GenericStructurePrimer {
                     int minZ = MathHelper.floor(nodeOriginZ - radiusHorizontal) - generatedCubePos.getMinZ() - 1;
                     int maxZ = MathHelper.floor(nodeOriginZ + radiusHorizontal) - generatedCubePos.getMinZ() + 1;
 
-                    if (minX < 0) {
-                        minX = 0;
-                    }
-                    if (maxX > 16) {
-                        maxX = 16;
-                    }
-                    if (minY < 0) {
-                        minY = 0;
-                    }
-                    if (maxY > 16) {
-                        maxY = 16;
-                    }
-                    if (minZ < 0) {
-                        minZ = 0;
-                    }
-                    if (maxZ > 16) {
-                        maxZ = 16;
-                    }
+                    if (minX < 0) minX = 0;
+                    if (maxX > 16) maxX = 16;
+                    if (minY < 0) minY = 0;
+                    if (maxY > 16) maxY = 16;
+                    if (minZ < 0) minZ = 0;
+                    if (maxZ > 16) maxZ = 16;
 
-                    boolean oceanic = this.checkOceanic(writer, minX, maxX, minY, maxY, minZ, maxZ);
-                    if (!oceanic) {
+                    if (!this.checkOceanic(writer, minX, maxX, minY, maxY, minZ, maxZ)) {
                         this.carveStep(generatedCubePos, writer, nodeOriginX, nodeOriginY, nodeOriginZ, radiusHorizontal, radiusVertical, minX, maxX, minY, maxY, minZ, maxZ);
-
-                        if (lastStep) {
-                            break;
-                        }
+                        if (lastStep) break;
                     }
                 }
             }
+
+            currentStep++;
         }
     }
 
@@ -275,15 +238,10 @@ public class GenericCavePrimer extends GenericStructurePrimer {
         IBlockState filler = biome.fillerBlock;
 
         if (this.canReplaceBlock(state, up) || state.getBlock() == top.getBlock() || state.getBlock() == filler.getBlock()) {
-            // TODO ?
-//            if (y - 1 < 10) {
-//                writer.set(x, y, z, LAVA);
-//            } else {
             writer.set(x, y, z, AIR);
             if (brokeSurface && writer.get(x, y - 1, z).getBlock() == filler.getBlock()) {
                 writer.set(x, y - 1, z, top.getBlock().getDefaultState());
             }
-//            }
         }
     }
 }

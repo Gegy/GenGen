@@ -1,4 +1,4 @@
-package net.gegy1000.gengen.api;
+package net.gegy1000.gengen.api.writer;
 
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.state.IBlockState;
