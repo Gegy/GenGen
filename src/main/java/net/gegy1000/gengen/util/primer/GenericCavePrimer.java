@@ -36,8 +36,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Random;
 import java.util.function.Predicate;
 
-import static io.github.opencubicchunks.cubicchunks.api.util.Coords.cubeToMinBlock;
-import static io.github.opencubicchunks.cubicchunks.api.util.Coords.localToBlock;
 import static java.lang.Math.max;
 import static net.gegy1000.gengen.util.primer.CubicStructurePrimeUtil.normalizedDistance;
 import static net.minecraft.util.math.MathHelper.*;
@@ -163,9 +161,9 @@ public class GenericCavePrimer implements GenericStructurePrimer {
         int nodes = rand.nextInt(rand.nextInt(rand.nextInt(MAX_INIT_NODES + 1) + 1) + 1);
 
         for (int node = 0; node < nodes; ++node) {
-            double branchStartX = localToBlock(cubeXOrigin, rand.nextInt(16));
-            double branchStartY = localToBlock(cubeYOrigin, rand.nextInt(16));
-            double branchStartZ = localToBlock(cubeZOrigin, rand.nextInt(16));
+            double branchStartX = cubeXOrigin << 4 + rand.nextInt(16);
+            double branchStartY = cubeYOrigin << 4 + rand.nextInt(16);
+            double branchStartZ = cubeZOrigin << 4 + rand.nextInt(16);
             int subBranches = 1;
 
             if (rand.nextInt(LARGE_NODE_RARITY) == 0) {
@@ -242,7 +240,7 @@ public class GenericCavePrimer implements GenericStructurePrimer {
         float vertDirChange = 0.0F;
 
         if (maxWalkedDistance <= 0) {
-            int maxBlockRadius = cubeToMinBlock(RANGE - 1);
+            int maxBlockRadius = (RANGE - 1) << 4;
             maxWalkedDistance = maxBlockRadius - rand.nextInt(maxBlockRadius / 4);
         }
 
