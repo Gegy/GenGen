@@ -69,6 +69,8 @@ public interface GenGenWorldProxy {
 
         @Override
         public void populateEntities(CubicPos pos, ChunkPopulationWriter writer, Random random) {
+            if (pos.getY() != 0) return;
+
             World world = writer.getGlobal();
             Biome biome = writer.getCenterBiome();
 
