@@ -161,9 +161,9 @@ public class GenericCavePrimer implements GenericStructurePrimer {
         int nodes = rand.nextInt(rand.nextInt(rand.nextInt(MAX_INIT_NODES + 1) + 1) + 1);
 
         for (int node = 0; node < nodes; ++node) {
-            double branchStartX = cubeXOrigin << 4 + rand.nextInt(16);
-            double branchStartY = cubeYOrigin << 4 + rand.nextInt(16);
-            double branchStartZ = cubeZOrigin << 4 + rand.nextInt(16);
+            double branchStartX = (cubeXOrigin << 4) + rand.nextInt(16);
+            double branchStartY = (cubeYOrigin << 4) + rand.nextInt(16);
+            double branchStartZ = (cubeZOrigin << 4) + rand.nextInt(16);
             int subBranches = 1;
 
             if (rand.nextInt(LARGE_NODE_RARITY) == 0) {
