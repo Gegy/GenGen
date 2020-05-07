@@ -6,6 +6,7 @@ import net.gegy1000.gengen.api.CubicPos;
 import net.gegy1000.gengen.core.GenGen;
 import net.gegy1000.gengen.core.impl.cubic.CubeGeneratorImpl;
 import net.gegy1000.gengen.core.impl.vanilla.ColumnGeneratorImpl;
+import net.gegy1000.gengen.core.support.BukkitSupport;
 import net.gegy1000.gengen.core.support.SpongeSupport;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.math.BlockPos;
@@ -30,6 +31,7 @@ public interface GenericChunkGenerator extends GenericChunkPrimer, GenericChunkP
     @Nullable
     static GenericChunkGenerator unwrap(IChunkGenerator generator) {
         generator = SpongeSupport.unwrapChunkGenerator(generator);
+        generator = BukkitSupport.unwrapChunkGenerator(generator);
         if (generator instanceof ColumnGeneratorImpl) {
             return ((ColumnGeneratorImpl) generator).getInner();
         }
