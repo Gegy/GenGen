@@ -8,6 +8,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.ChunkGeneratorOverworld;
 
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @MethodsReturnNonnullByDefault
@@ -20,12 +21,13 @@ public class OverworldGeneratorWrapper extends ChunkGeneratorOverworld {
         this.generator = generator;
     }
 
+    @Nullable
     public static ChunkGeneratorOverworld from(World world) {
         GenericChunkGenerator generator = GenericChunkGenerator.unwrap(world);
         if (generator != null) {
             return new OverworldGeneratorWrapper(world, generator);
         }
-        throw new IllegalArgumentException("Given world does not support column generation");
+        return null;
     }
 
     @Override
