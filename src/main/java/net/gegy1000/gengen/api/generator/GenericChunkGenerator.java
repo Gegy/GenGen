@@ -2,7 +2,6 @@ package net.gegy1000.gengen.api.generator;
 
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.CubicPos;
 import net.gegy1000.gengen.core.GenGen;
 import net.gegy1000.gengen.core.impl.cubic.CubeGeneratorImpl;
 import net.gegy1000.gengen.core.impl.vanilla.ColumnGeneratorImpl;
@@ -21,7 +20,7 @@ import java.util.List;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public interface GenericChunkGenerator extends GenericChunkPrimer, GenericChunkPopulator {
+public interface GenericChunkGenerator extends GenericChunkPrimer, GenericChunkPopulator, GenericStructureGenerator {
     @Nullable
     static GenericChunkGenerator unwrap(World world) {
         return GenGen.proxy(world).unwrapChunkGenerator(world);
@@ -49,17 +48,5 @@ public interface GenericChunkGenerator extends GenericChunkPrimer, GenericChunkP
 
     default List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType type, BlockPos pos) {
         return Collections.emptyList();
-    }
-
-    default void prepareStructures(CubicPos pos) {
-    }
-
-    @Nullable
-    default BlockPos getClosestStructure(String name, BlockPos pos, boolean findUnexplored) {
-        return null;
-    }
-
-    default boolean isInsideStructure(String name, BlockPos pos) {
-        return false;
     }
 }

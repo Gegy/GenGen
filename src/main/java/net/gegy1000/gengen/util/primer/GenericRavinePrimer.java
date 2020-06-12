@@ -26,6 +26,7 @@ package net.gegy1000.gengen.util.primer;
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.gengen.api.CubicPos;
 import net.gegy1000.gengen.api.HeightFunction;
+import net.gegy1000.gengen.api.generator.GenericChunkPrimer;
 import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -44,7 +45,7 @@ import static net.minecraft.util.math.MathHelper.*;
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class GenericRavinePrimer implements GenericStructurePrimer {
+public class GenericRavinePrimer implements GenericChunkPrimer {
     private static final int RANGE = 8;
 
     /**

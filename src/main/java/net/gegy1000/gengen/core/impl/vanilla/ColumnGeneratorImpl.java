@@ -11,7 +11,6 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.IChunkGenerator;
-import net.minecraftforge.event.ForgeEventFactory;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -64,14 +63,10 @@ public class ColumnGeneratorImpl implements IChunkGenerator {
     public void populate(int x, int z) {
         this.random.setSeed(x << 4, z << 4);
 
-        ForgeEventFactory.onChunkPopulate(true, this, this.world, this.random, x, z, false);
-
         for (int y = 0; y < 16; y++) {
             CubicPos pos = new CubicPos(x, y, z);
             this.generator.populateChunk(pos, new ColumnPopulationWriterImpl(this.world, pos));
         }
-
-        ForgeEventFactory.onChunkPopulate(false, this, this.world, this.random, x, z, false);
     }
 
     @Override

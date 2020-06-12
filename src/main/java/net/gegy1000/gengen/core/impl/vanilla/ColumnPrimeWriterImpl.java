@@ -1,8 +1,8 @@
 package net.gegy1000.gengen.core.impl.vanilla;
 
 import mcp.MethodsReturnNonnullByDefault;
-import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
 import net.gegy1000.gengen.api.CubicPos;
+import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.world.chunk.ChunkPrimer;
 

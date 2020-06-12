@@ -25,6 +25,7 @@ package net.gegy1000.gengen.util.primer;
 
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.gengen.api.CubicPos;
+import net.gegy1000.gengen.api.generator.GenericChunkPrimer;
 import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -47,7 +48,7 @@ import static net.minecraft.util.math.MathHelper.*;
 //TODO: Fix code duplication beterrn cave and cave generators
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class GenericCavePrimer implements GenericStructurePrimer {
+public class GenericCavePrimer implements GenericChunkPrimer {
     private static final int RANGE = 8;
 
     /**

@@ -48,7 +48,11 @@ public interface GenericWorldType {
 
     BiomeProvider createBiomeProvider(World world);
 
-    default int calculateMaxGenerationHeight(WorldServer world) {
+    default int getMinGenerationHeight(WorldServer world) {
+        return 0;
+    }
+
+    default int getMaxGenerationHeight(WorldServer world) {
         return Short.MAX_VALUE;
     }
 
