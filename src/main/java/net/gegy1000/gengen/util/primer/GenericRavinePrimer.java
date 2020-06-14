@@ -145,7 +145,7 @@ public class GenericRavinePrimer implements GenericChunkPrimer {
 
     @Override
     public void primeChunk(CubicPos pos, ChunkPrimeWriter writer) {
-        this.primeStructure(this.world, writer, pos, this::generate, RANGE, 1);
+        CubicStructureUtil.primeStructure(this.world, writer, pos, this::generate, RANGE, 1);
     }
 
     protected void generate(Random rand, ChunkPrimeWriter writer, int structureX, int structureY, int structureZ, CubicPos generatedCubePos) {
@@ -297,9 +297,9 @@ public class GenericRavinePrimer implements GenericChunkPrimer {
         }
         StructureBoundingBox boundingBox = new StructureBoundingBox(minLocalX, minLocalY, minLocalZ, maxLocalX, maxLocalY, maxLocalZ);
 
-        CubicStructurePrimeUtil.clampBoundingBoxToLocalCube(boundingBox);
+        CubicStructureUtil.clampBoundingBoxToLocalCube(boundingBox);
 
-        boolean hitLiquid = CubicStructurePrimeUtil.scanWallsForBlock(writer, boundingBox,
+        boolean hitLiquid = CubicStructureUtil.scanWallsForBlock(writer, boundingBox,
                 (b) -> b.getBlock() == Blocks.WATER || b.getBlock() == Blocks.FLOWING_WATER);
 
         if (!hitLiquid) {
@@ -324,16 +324,16 @@ public class GenericRavinePrimer implements GenericChunkPrimer {
         int maxZ = boundingBox.maxZ;
 
         for (int localX = minX; localX < maxX; ++localX) {
-            double distX = CubicStructurePrimeUtil.normalizedDistance(generatedCubeX, localX, ravineX, ravineSizeHoriz);
+            double distX = CubicStructureUtil.normalizedDistance(generatedCubeX, localX, ravineX, ravineSizeHoriz);
 
             for (int localZ = minZ; localZ < maxZ; ++localZ) {
-                double distZ = CubicStructurePrimeUtil.normalizedDistance(generatedCubeZ, localZ, ravineZ, ravineSizeHoriz);
+                double distZ = CubicStructureUtil.normalizedDistance(generatedCubeZ, localZ, ravineZ, ravineSizeHoriz);
 
                 if (distX * distX + distZ * distZ >= 1.0D) {
                     continue;
                 }
                 for (int localY = minY; localY < maxY; ++localY) {
-                    double distY = CubicStructurePrimeUtil.normalizedDistance(generatedCubeY, localY, ravineY, ravineSizeVert);
+                    double distY = CubicStructureUtil.normalizedDistance(generatedCubeY, localY, ravineY, ravineSizeVert);
 
                     //distY*distY/STRETCH_Y_FACTOR is a hack
                     //it should make the ravine way more stretched in the Y dimension, but because of previous checks

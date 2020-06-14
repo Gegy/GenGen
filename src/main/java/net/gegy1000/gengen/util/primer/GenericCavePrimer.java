@@ -38,7 +38,7 @@ import java.util.Random;
 import java.util.function.Predicate;
 
 import static java.lang.Math.max;
-import static net.gegy1000.gengen.util.primer.CubicStructurePrimeUtil.normalizedDistance;
+import static net.gegy1000.gengen.util.primer.CubicStructureUtil.normalizedDistance;
 import static net.minecraft.util.math.MathHelper.*;
 
 /**
@@ -152,7 +152,7 @@ public class GenericCavePrimer implements GenericChunkPrimer {
 
     @Override
     public void primeChunk(CubicPos pos, ChunkPrimeWriter writer) {
-        this.primeStructure(this.world, writer, pos, this::generate, RANGE, 1);
+        CubicStructureUtil.primeStructure(this.world, writer, pos, this::generate, RANGE, 1);
     }
 
     protected void generate(Random rand, ChunkPrimeWriter writer, int cubeXOrigin, int cubeYOrigin, int cubeZOrigin, CubicPos generatedCubicPos) {
@@ -374,9 +374,9 @@ public class GenericCavePrimer implements GenericChunkPrimer {
         }
         StructureBoundingBox boundingBox = new StructureBoundingBox(minLocalX, minLocalY, minLocalZ, maxLocalX, maxLocalY, maxLocalZ);
 
-        CubicStructurePrimeUtil.clampBoundingBoxToLocalCube(boundingBox);
+        CubicStructureUtil.clampBoundingBoxToLocalCube(boundingBox);
 
-        boolean hitLiquid = CubicStructurePrimeUtil.scanWallsForBlock(cube, boundingBox,
+        boolean hitLiquid = CubicStructureUtil.scanWallsForBlock(cube, boundingBox,
                 (b) -> b.getBlock() == Blocks.LAVA || b.getBlock() == Blocks.FLOWING_LAVA);
 
         if (!hitLiquid) {
