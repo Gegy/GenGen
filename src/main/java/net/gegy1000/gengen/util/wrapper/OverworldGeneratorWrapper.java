@@ -17,7 +17,7 @@ public class OverworldGeneratorWrapper extends ChunkGeneratorOverworld {
     private final GenericChunkGenerator generator;
 
     public OverworldGeneratorWrapper(World world, GenericChunkGenerator generator) {
-        super(world, world.getWorldInfo().getSeed(), false, "");
+        super(world, world.getWorldInfo().getSeed(), false, null);
         this.generator = generator;
     }
 
