@@ -25,6 +25,7 @@ package net.gegy1000.gengen.util.primer;
 
 import mcp.MethodsReturnNonnullByDefault;
 import net.gegy1000.gengen.api.CubicPos;
+import net.gegy1000.gengen.api.HeightFunction;
 import net.gegy1000.gengen.api.generator.GenericChunkPrimer;
 import net.gegy1000.gengen.api.writer.ChunkPrimeWriter;
 import net.minecraft.block.state.IBlockState;
@@ -145,9 +146,11 @@ public class GenericCavePrimer implements GenericChunkPrimer {
             state.getBlock() == Blocks.STONE || state.getBlock() == Blocks.DIRT || state.getBlock() == Blocks.GRASS);
 
     private final World world;
+    private final HeightFunction surfaceFunction;
 
-    public GenericCavePrimer(World world) {
+    public GenericCavePrimer(World world, HeightFunction surfaceFunction) {
         this.world = world;
+        this.surfaceFunction = surfaceFunction;
     }
 
     @Override
@@ -156,7 +159,12 @@ public class GenericCavePrimer implements GenericChunkPrimer {
     }
 
     protected void generate(Random rand, ChunkPrimeWriter writer, int cubeXOrigin, int cubeYOrigin, int cubeZOrigin, CubicPos generatedCubicPos) {
-        if (rand.nextInt(CAVE_RARITY) != 0) return;
+        int surfaceY = this.surfaceFunction.apply((cubeXOrigin << 4) + 8, (cubeZOrigin << 4) + 8);
+        int surfaceCubeY = surfaceY >> 4;
+
+        if (cubeYOrigin > surfaceCubeY || rand.nextInt(CAVE_RARITY) != 0) {
+            return;
+        }
 
         //very low probability of generating high number
         int nodes = rand.nextInt(rand.nextInt(rand.nextInt(MAX_INIT_NODES + 1) + 1) + 1);

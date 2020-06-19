@@ -152,7 +152,7 @@ public class GenericRavinePrimer implements GenericChunkPrimer {
         int surfaceY = this.surfaceFunction.apply((structureX << 4) + 8, (structureZ << 4) + 8);
         int surfaceCubeY = surfaceY >> 4;
 
-        if (rand.nextInt(RAVINE_RARITY) != 0 || structureY > surfaceCubeY) {
+        if (structureY > surfaceCubeY || rand.nextInt(RAVINE_RARITY) != 0) {
             return;
         }
 
